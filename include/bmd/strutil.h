@@ -22,6 +22,8 @@
 #ifndef BMD_STRUTIL_H
 #define BMD_STRUTIL_H
 
+#define NULL_TERM '\0'
+
 
 /**
 * Overwrites the data in the destination string with the data from the src string

@@ -40,7 +40,7 @@ int copyStr_s(char* dest, const char* src, int max)
 			if (DEBUGGING)
 				fprintf(stderr, "Error: String \"%s\" exceeds max length allowed (%i)\n",
 						cpySrc, max);
-					FILES_ASSERT(0);
+					BMD_ASSERT(0);
 			return BMD_ERROR_EXCEEDS_LENGTH;
 		}
 		character = *src++;
@@ -97,7 +97,7 @@ int concatStr(char* orig, const char* add)
 		orig++;
 	}
 
-	*orig = '\0';
+	*orig = NULL_TERM;
 	return BMD_NO_ERROR;
 }
 
@@ -123,7 +123,7 @@ int concatStr(char* orig, const char* add, int start, int stop)
 		if(i > stop) break;
 	}
 
-	*orig = '\0';
+	*orig = NULL_TERM;
 	return BMD_NO_ERROR;
 }
 
@@ -158,7 +158,7 @@ char* substr(const char* str, int start, int stop)
 		*(ptr + c) = *(str + start);
 		str++;
 	}
-	*(ptr + c) = '\0';
+	*(ptr + c) = NULL_TERM;
 	return ptr;
 }
 

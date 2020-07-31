@@ -35,10 +35,10 @@
 #include <assert.h>
 #include <errno.h>
 
-#define FILES_ASSERT assert
+#define BMD_ASSERT assert
 #else
 // If DEBUGGING is disabled (not 1) then don't use assert
-#define FILES_ASSERT(...)
+#define BMD_ASSERT(...)
 #endif // DEBUGGING
 
 #endif //BMD_COMMON_H

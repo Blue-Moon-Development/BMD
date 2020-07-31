@@ -35,7 +35,7 @@ int safeCopy_internal(char* dest, const char* src, int n, int max, const char* f
 			if (!DEBUGGING) return BMD_ERROR_EXCEEDS_LENGTH;
 			fprintf(stderr, "Error: String \"%s\" exceeds max length allowed (%i) on line %i of %s\n",
 					copyOfSrc, max, line, file);
-					FILES_ASSERT(0);
+					BMD_ASSERT(0);
 			return BMD_ERROR_EXCEEDS_LENGTH;
 		}
 		character = *src++;
@@ -177,7 +177,7 @@ int doesFileExist(const char* path)
 
 int loadFile(dir_t* dir, file_t* file)
 {
-			FILES_ASSERT(dir->handle != INVALID_HANDLE_VALUE);
+			BMD_ASSERT(dir->handle != INVALID_HANDLE_VALUE);
 	int n = 0;
 	char* dirPath = dir->path;
 	char* filePath = file->path;
@@ -222,7 +222,7 @@ int openDir(dir_t* dir, const char* path)
 			fprintf(stderr, "Error: Could not open directory [%s] - %s", path, strerror(errno));
 		// To be safe, lets mark the directory as closed
 		closeDir(dir);
-				FILES_ASSERT(0);
+				BMD_ASSERT(0);
 		return BMD_ERROR_OPEN_DIR;
 	}
 
@@ -243,14 +243,14 @@ int closeDir(dir_t* dir)
 
 int nextFile(dir_t* dir)
 {
-			FILES_ASSERT(dir->hasNext);
+			BMD_ASSERT(dir->hasNext);
 
 	if (!FindNextFileA(dir->handle, &dir->fdata))
 	{
 		dir->hasNext = 0;
 		DWORD err = GetLastError();
 		int retErr = err == ERROR_SUCCESS || err == ERROR_NO_MORE_FILES;
-				FILES_ASSERT(retErr);
+				BMD_ASSERT(retErr);
 		return retErr ? BMD_NO_ERROR : BMD_ERROR_NEXT_FILE;
 	}
 
