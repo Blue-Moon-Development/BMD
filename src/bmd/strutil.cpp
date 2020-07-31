@@ -28,7 +28,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-int copyStr_safe_(char* dest, const char* src, int max, const char* file, int line)
+int copyStr_s(char* dest, const char* src, int max)
 {
 	int size = 0;
 	int character;
@@ -38,8 +38,8 @@ int copyStr_safe_(char* dest, const char* src, int max, const char* file, int li
 		if (size >= max)
 		{
 			if (DEBUGGING)
-				fprintf(stderr, "Error: String \"%s\" exceeds max length allowed (%i) on line %i of %s\n",
-						cpySrc, max, line, file);
+				fprintf(stderr, "Error: String \"%s\" exceeds max length allowed (%i)\n",
+						cpySrc, max);
 					FILES_ASSERT(0);
 			return BMD_ERROR_EXCEEDS_LENGTH;
 		}
@@ -65,11 +65,11 @@ int copyStr(char* dest, const char* src)
 	return size;
 }
 
-int copyStrDynamic_safe_(char*& dest, const char* src, int max, const char* file, int line)
+int copyStrDynamic_s(char*& dest, const char* src, int max)
 {
 	int bufferSize = sizeof(char) + strlen(src);
 	char* buffer = (char*) malloc(bufferSize);
-	int size = copyStr_safe_(buffer, src, max, file, line);
+	int size = copyStr_s(buffer, src, max);
 	dest = buffer;
 	return size;
 }
@@ -132,14 +132,12 @@ int concatStr(char* orig, const char* add, int stop)
 	return concatStr(orig, add, -1, stop);
 }
 
-char* substr_(const char* str, int start, int stop, const char* file, int line)
+char* substr(const char* str, int start, int stop)
 {
 	if (!str)
 	{
 		if (DEBUGGING)
-			fprintf(stderr, "Error: Tried to get substring from a null string in "
-							"file %s at line %i", file,
-					line);
+			fprintf(stderr, "Error: Tried to get substring from a null string\n");
 		return NULL;
 	}
 	int length = strlen(str);
@@ -147,9 +145,9 @@ char* substr_(const char* str, int start, int stop, const char* file, int line)
 	{
 		if (DEBUGGING)
 			fprintf(stderr,
-					"Error: Index out of bounds when trying to get a substring in file %s at line %i. "
-					"Ensure start >= 0 and stop < str length. Given start: %i, stop: %i\n",
-					file, line, start, stop);
+					"Error: Index out of bounds when trying to get a substring\n"
+					"Ensure start >= 0 and stop < str length (%i). Given start: %i, stop: %i\n",
+					length, start, stop);
 		return NULL;
 	}
 
@@ -164,16 +162,16 @@ char* substr_(const char* str, int start, int stop, const char* file, int line)
 	return ptr;
 }
 
-char* substr_(const char* str, int start, const char* file, int line)
+char* substr(const char* str, int start)
 {
 	if(!str)
 	{
 		if(DEBUGGING)
-			fprintf(stderr, "Error: Attempted to capture a substring from a null string in file %s at line %i", file, line);
+			fprintf(stderr, "Error: Attempted to capture a substring from a null string\n");
 		return NULL;
 	}
 
-	return substr_(str, start, strlen(str), file, line);
+	return substr(str, start, strlen(str));
 }
 
 int indexOf(const char* str, char c)
@@ -192,21 +190,6 @@ int lastIndexOf(const char* str, char c)
 	return ret;
 }
 
-int* indicesOf(const char* str, char c)
-{
-	if(!str) return NULL;
-	int* ret = (int*)malloc(strlen(str) * sizeof(int));
-	int n = 0;
-	for(int i = 0; i < strlen(str); i++)
-	{
-		if(str[i] == c)
-		{
-			ret[ n ] = i;
-			n++;
-		}
-	}
-	return ret;
-}
 
 int indicesOf(const char* str, char c, int*& indices)
 {
