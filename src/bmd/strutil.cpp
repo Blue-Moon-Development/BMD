@@ -26,6 +26,7 @@
 #include "bmd/common.h"
 
 #include <string.h>
+#include <stdlib.h>
 
 int copyStr_safe_(char* dest, const char* src, int max, const char* file, int line)
 {
@@ -82,8 +83,10 @@ int copyStrDynamic(char*& dest, const char* src)
 	return size;
 }
 
-void concatStr(char* orig, char* add)
+int concatStr(char* orig, const char* add)
 {
+	if(!orig) return BMD_ERROR_NULL_STRING;
+	if(!add) return BMD_ERROR_NULL_STRING;
 	while (*orig)
 		orig++;
 
@@ -95,25 +98,38 @@ void concatStr(char* orig, char* add)
 	}
 
 	*orig = '\0';
+	return BMD_NO_ERROR;
 }
 
-void concatStr(char* orig, char* add, int stop)
+int concatStr(char* orig, const char* add, int start, int stop)
 {
-	while (*orig)
+	if(!orig) return BMD_ERROR_NULL_STRING;
+	if(!add) return BMD_ERROR_NULL_STRING;
+	while(*orig)
 		orig++;
-
 	int i = 0;
-	while (*add)
+	while(*add)
 	{
+		if(i <= start)
+		{
+			add++;
+			i++;
+			continue;
+		}
 		*orig = *add;
 		add++;
 		orig++;
 		i++;
-		if (i >= stop)
-			break;
+		if(i > stop) break;
 	}
 
 	*orig = '\0';
+	return BMD_NO_ERROR;
+}
+
+int concatStr(char* orig, const char* add, int stop)
+{
+	return concatStr(orig, add, -1, stop);
 }
 
 char* substr_(const char* str, int start, int stop, const char* file, int line)
@@ -127,13 +143,13 @@ char* substr_(const char* str, int start, int stop, const char* file, int line)
 		return NULL;
 	}
 	int length = strlen(str);
-	if (start < 0 || stop >= length)
+	if (start < 0 || stop > length || start >= length || stop <= 0)
 	{
 		if (DEBUGGING)
 			fprintf(stderr,
 					"Error: Index out of bounds when trying to get a substring in file %s at line %i. "
-					"Ensure start >= 0 and stop < str length",
-					file, line);
+					"Ensure start >= 0 and stop < str length. Given start: %i, stop: %i\n",
+					file, line, start, stop);
 		return NULL;
 	}
 
@@ -146,4 +162,65 @@ char* substr_(const char* str, int start, int stop, const char* file, int line)
 	}
 	*(ptr + c) = '\0';
 	return ptr;
+}
+
+char* substr_(const char* str, int start, const char* file, int line)
+{
+	if(!str)
+	{
+		if(DEBUGGING)
+			fprintf(stderr, "Error: Attempted to capture a substring from a null string in file %s at line %i", file, line);
+		return NULL;
+	}
+
+	return substr_(str, start, strlen(str), file, line);
+}
+
+int indexOf(const char* str, char c)
+{
+	const char* ptr = strchr(str, c);
+	int ret = (int)(ptr - str);
+	if(ret == -1) return BMD_ERROR_CHAR_NOT_IN_STRING;
+	return ret;
+}
+
+int lastIndexOf(const char* str, char c)
+{
+	const char* ptr = strrchr(str, c);
+	int ret = (int)(ptr - str);
+	if(ret == -1) return BMD_ERROR_CHAR_NOT_IN_STRING;
+	return ret;
+}
+
+int* indicesOf(const char* str, char c)
+{
+	if(!str) return NULL;
+	int* ret = (int*)malloc(strlen(str) * sizeof(int));
+	int n = 0;
+	for(int i = 0; i < strlen(str); i++)
+	{
+		if(str[i] == c)
+		{
+			ret[ n ] = i;
+			n++;
+		}
+	}
+	return ret;
+}
+
+int indicesOf(const char* str, char c, int*& indices)
+{
+	if(!str) return BMD_ERROR_NULL_STRING;
+	int n = 0;
+	int* ret = (int*)malloc(strlen(str) * sizeof(int));
+	for(int i = 0; i < strlen(str); i++)
+	{
+		if(str[i] == c)
+		{
+			ret[n] = i;
+			n++;
+		}
+	}
+	indices = ret;
+	return n;
 }

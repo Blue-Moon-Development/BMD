@@ -148,7 +148,7 @@ int readFileContents(file_t* file)
 	if (!doesFileExist(file->path)) return BMD_ERROR_FILE_NOT_FOUND;
 	FILE* f;
 	fopen_s(&f, file->path, "rt");
-	char data[file->size + 1];
+	char* data;
 	fread(data, 1, file->size, f);
 	file->contents = data;
 	if (!file->contents) return BMD_ERROR_READ_FILE;

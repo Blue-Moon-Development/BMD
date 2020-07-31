@@ -33,10 +33,7 @@
 * @param max The maximum allowed length to copy for use cases where this can effect safety
 * @return The size of the new destination string
 */
-#define copyStr_s(dest, src, max) __copyStr(dest, src, max, __FILE__, __LINE__)
-
-
-
+#define copyStr_s(dest, src, max) copyStr_safe_(dest, src, max, __FILE__, __LINE__)
 
 
 /**
@@ -44,9 +41,9 @@
 * @param dest The string to overwrite
 * @param src The source string to copy to the destination
 * @param max The maximum allowed length to copy for use cases where this can effect safety
-* @return The size of the new destination string or -1 if the src is longer than the given max
+* @return The size of the new destination string or -13 if the src is longer than the given max
 */
-#define copyStrDynamic_s(dest, src, max) _copyStrDynamic_safe(dest, src, max, __FILE__, __LINE__)
+#define copyStrDynamic_s(dest, src, max) _copyStrDynamic_safe_(dest, src, max, __FILE__, __LINE__)
 
 /**
 * Captures a sub string contained within str ranging from [start - (stop - 1)]
@@ -58,13 +55,21 @@
 #define substr(str, start, stop) substr_(str, start, stop, __FILE__, __LINE__)
 
 /**
+* Captures a sub string contained within str starting from the given start index. Use substr macro
+* @param str The string containing the desired sub string
+* @param start The beginning index of the sub string, inclusive
+* @return The substring, or NULL if either index were out of bounds
+*/
+#define substrFrom(str, start) substr_(str, start, __FILE__, __LINE__)
+
+/**
 * Overwrites the data in the destination string with the data from the src string. The copyStr_s macro should be used.
 * @param dest The string to overwrite. Must be a fixed string, not dynamic.
 * @param src The source string to copy to the destination
 * @param max The maximum allowed length to copy for use cases where this can effect safety
 * @param file The file the function was executed in
 * @param line The line number where the function was used
-* @return The size of the new destination string or -1 if the src is longer than the given max
+* @return The size of the new destination string or -13 if the src is longer than the given max
 */
 extern int copyStr_safe_(char* dest, const char* src, int max, const char* file, int line);
 
@@ -88,7 +93,7 @@ extern int copyStr(char* dest, const char* src);
 * @param max The maximum allowed length to copy for use cases where this can effect safety
 * @param file The file the function was executed in
 * @param line The line number where the function was used
-* @return The size of the new destination string or -1 if the src is longer than the given max
+* @return The size of the new destination string or -13 if the src is longer than the given max
 */
 extern int copyStrDynamic_safe_(char*& dest, const char* src, int max, const char* file, int line);
 
@@ -110,15 +115,24 @@ extern int copyStrDynamic(char*& dest, const char* src);
 * @param orig The original C-String
 * @param add The C-String to append to orig
 */
-extern void concatStr(char* orig, char* add);
+extern int concatStr(char* orig, const char* add);
 
 /**
 * Concatenates two C-Style strings with unknown lengths
 * @param orig The original C-String
 * @param add The C-String to append to orig
-* @param stop The index to stop concatenating at. Must be less than the length of add
+* @param start The index to start concatenating at
+* @param stop The index to stop concatenating at
 */
-extern void concatStr(char* orig, char* add, int stop);
+extern int concatStr(char* orig, const char* add, int start, int stop);
+
+/**
+* Concatenates two C-Style strings with unknown lengths
+* @param orig The original C-String
+* @param add The C-String to append to orig
+* @param stop The index to stop concatenating at
+*/
+extern int concatStr(char* orig, const char* add, int stop);
 
 /**
 * Captures a sub string contained within str ranging from [start - (stop - 1)]. Use substr macro
@@ -130,5 +144,48 @@ extern void concatStr(char* orig, char* add, int stop);
 * @return The substring, or NULL if either index were out of bounds
 */
 extern char* substr_(const char* str, int start, int stop, const char* file, int line);
+
+/**
+* Captures a sub string contained within str starting from the given start index. Use substr macro
+* @param str The string containing the desired sub string
+* @param start The beginning index of the sub string, inclusive
+* @param file The file this function was called in
+* @param line The line number of the file this function was called in
+* @return The substring, or NULL if either index were out of bounds
+*/
+extern char* substr_(const char* str, int start, const char* file, int line);
+
+/**
+* Retrieves the first index where the given character exists
+* @param str The string containing the character
+* @param c The character to look for
+* @return The first index of the character, or an error code (less than 0) if its not found
+*/
+extern int indexOf(const char* str, char c);
+
+/**
+* Retrieves the last index where the given character exists
+* @param str The string containing the character
+* @param c The character to look for
+* @return The last index of the character, or an error code (less than 0) if its not found
+*/
+extern int lastIndexOf(const char* str, char c);
+
+/**
+* Retrieves every index where the given character exists and returns at as an int* (array)
+* @param str The string containing the character
+* @param c The character to look for
+* @return An int* pointing to the array of indices, or NULL if the character is not found
+*/
+extern int* indicesOf(const char* str, char c);
+
+/**
+* Retrieves every index where the given character exists and stores them in an int* (array)
+* @param str The string containing the character
+* @param c The character to look for
+* @param indices The int* to store the indices in
+* @return The length of the indices array, or an error code (less than 0) if its not found
+*/
+extern int indicesOf(const char* str, char c, int*& indices);
 
 #endif //BMD_STRUTIL_H

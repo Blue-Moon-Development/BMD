@@ -19,7 +19,43 @@
  * Author: Matt
  */
 
+#include <bmd/strutil.h>
+#include <stdio.h>
+
+void test_substr()
+{
+	// From start to end
+	//TODO: Maybe scrap the idea of logging the file/line number, we have debugger for a reason
+	char* sub = substrFrom("This is an example string", 7);
+	printf("Sub str is: %s\n", sub);
+	sub = substr("How about this sample text", 4, 11);
+	printf("Sub str is: %s\n", sub);
+}
+
+void test_index_finder()
+{
+	int first_L = indexOf("this is a little monkey, let\'s give him lot\'s of love!", 'l');
+	printf("First L at: %i\n", first_L);
+	int last_L = lastIndexOf("this is a little monkey, let\'s give him lot\'s of love!", 'l');
+	printf("Last L at: %i\n", last_L);
+	int* ints = indicesOf("this is a little monkey, let\'s give him lot\'s of love!", 'l');
+	printf("Ls from the pointer: ");
+	for(int i = 0; i < sizeof(*ints) + 1; i++)
+	{
+		printf("%i ", ints[i]);
+	}
+
+	int* ptr;
+	int len = indicesOf("this is a little monkey, let\'s give him lot\'s of love!", 'l', ptr);
+	printf("\nLs from the given length: ");
+	for(int i = 0; i < len; i++)
+	{
+		printf("%i ", ptr[i]);
+	}
+}
+
 int main(int argc, char** argv)
 {
-
+	test_substr();
+	test_index_finder();
 }
