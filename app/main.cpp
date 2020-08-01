@@ -53,6 +53,8 @@ void test_index_finder()
 	printf("\n");
 }
 
+
+
 int getSize(int* arr)
 {
 	if (!arr) return 0;
@@ -80,13 +82,14 @@ int getSize(unsigned int* arr)
 
 	return n;
 }
-
+#include <math.h>
 int getSize(float* arr)
 {
 	if (!arr) return 0;
 	int n = 0;
 	while (*arr != -107374176.0f)
 	{
+		if(nan((char*)arr)) return -1;
 		printf("Float at index %i is %f\n", n, *arr);
 		arr++;
 		n++;
@@ -113,7 +116,7 @@ int getSize(short* arr)
 {
 	if (!arr) return 0;
 	int n = 0;
-	while (*arr != -13108)
+	while (*arr != -13108 && *arr != -515)
 	{
 		printf("Short at index %i is %i\n", n, *arr);
 		arr++;
@@ -267,6 +270,14 @@ void test_arr_length()
 	const char* str = "123456";
 	len = getSize(str);
 	printf("Length of str is %i\n", len);
+
+	short* dynshort = new short[5];
+	dynshort[0] = 1;
+	dynshort[4] = 5;
+	len = getSize(dynshort);
+	printf("Length of dynshort is %i\n", len);
+
+	delete[] dynshort;
 }
 
 void test_concat()
@@ -285,14 +296,31 @@ void test_concat()
 	concatStr(hi, " Yes really you monkey brain", 7, 10);
 	printf("hi became: %s\n", hi);
 
-	const char* maybe = "hopefully";
-	//concatStr(maybe, " this works?");
+	char* maybe = "hopefully";
+	const char* add = " this works";
+	int e = concatStrDynamic(maybe, add);
+	printf("Error is %i  maybe is: %s\n", e, maybe);
+	if(!e && maybe)
+		free(maybe);
+
+	char* one = "one";
+	int e2 = concatStrDynamic(one, " two three four!", 4, 9);
+	printf("one: %s\n", one);
+	if(!e2 && one)
+		free(one);
+
+	char* abc  = "abc";
+	int e3 = concatStrDynamic(abc, " easy as 1 2 3!", 5);
+	printf("abc: %s\n", abc);
+	if(!e3 && abc)
+		free(abc);
 }
 
 void test_copy()
 {
 	char staticStr[100] = { "this will get overwritten" };
-	copyStr_s(staticStr, "new text!", 100);
+	const char* newStaticStr = "new text!";
+	copyStr_s(staticStr, newStaticStr, 100);
 	printf("staticStr became: %s\n", staticStr);
 
 	char* dynStr;
@@ -309,6 +337,12 @@ void test_copy()
 	copyStrDynamic(rewriteThis, "new dynamic text");
 	printf("rewriteThis became: %s\n", rewriteThis);
 
+	// Dynamic copies must be freed or else we get memory leaks!
+	// Would be cool to implement a C++ shared_ptr that works with raw C pointers, though I doubt that's possible
+	if(dynStr)
+		free(dynStr);
+	if(rewriteThis)
+		free(rewriteThis);
 }
 
 void test_arr_as_param(int* arr)
@@ -316,18 +350,69 @@ void test_arr_as_param(int* arr)
 	printf("Param arr length is: %i\n", getSize(arr));
 }
 
+// this works, and I believe would work in normal C as well (as C doesn't support passing by ref I believe)
+// Needs testing, but could replace at least the copyStrDynamic functions and could just be copyStr(&dest, src)?
+// Would be much safer than using the current dynamic system with malloc
+// Especially since with the current dynamic malloc system, a string passed by reference is still required
+void test_ptr_ref(char** dp, const char* p)
+{
+	if(!dp || !p) return;
+	*dp = (char*)p;
+}
+
 
 int main(int argc, char** argv)
 {
-	test_substr();
-	test_index_finder();
-	test_concat();
-	test_copy();
-	test_arr_length();
-	int t[] = {
-			1, 2, 3,
-			4, 5, 6
-	};
-	test_arr_as_param(t);
+	//char -> -3
+	int len = 0;
+	char* dynshort = new char[5];
+	printf("Size of dynshort is %zu\n", sizeof(dynshort));
+	dynshort[0] = 1;
+	dynshort[3] = 5;
+	dynshort[4] = 0;
+	//dynshort[9] = 10;
+	len = getSize(dynshort);
+	printf("Length of dynshort is %i\n", len);
 
+	delete[] dynshort;
+
+	//test_substr();
+	//test_index_finder();
+	//test_concat();
+	//test_copy();
+	//test_arr_length();
+	//
+	//char* something = "something";
+	//test_ptr_ref(&something, " else");
+	//printf("something is: %s\n", something);
+	//
+	//char* a = "some data";
+	//char* temp = a;
+	//char* b = "some other data";
+	//printf("Before assignment. A = %s, B = %s\n", a, b);
+	//test_ptr_ref(&a, b);
+	////a = b;
+	//printf("After assignment. A = %s, B = %s\n", a, b);
+	//// and this right here is why test_ptr_ref is not ideal
+	//b = "changed!";
+	//printf("After B was changed. A = %s, B = %s\n", a, b);
+	//a = temp;
+	//b = "original";
+	//printf("a after temp assign: %s\n", a);
+	//copyStrDynamic(a, b);
+	//printf("After copy. A = %s, B= %s\n", a, b);
+	//b = "new change!";
+	//printf("After B was changed again. A = %s, B = %s\n", a, b);
+	//if(a) free(a);
+
+	//int t[] = {
+	//		1, 2, 3,
+	//		4, 5, 6
+	//};
+	//test_arr_as_param(t);
+
+	//const char* test = "test const";
+	//char* test2 = "non const test";
+	//test2 = const_cast<char*>(test); // safer way of doing copyStrDynamic, but only works in C++ not C. Not sure about performance
+	//printf("Test 2: %s\n", test2);
 }

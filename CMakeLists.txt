@@ -27,6 +27,7 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
   # Could do things like CMAKE_CXX_STANDARD here
 
   # We want std=c++xx not g++
+#  set(CMAKE_C_STANDARD 11)
   set(CMAKE_CXX_EXTENSIONS OFF)
 
   # Lets us use folders in IDEs

@@ -132,6 +132,50 @@ int concatStr(char* orig, const char* add, int stop)
 	return concatStr(orig, add, -1, stop);
 }
 
+int concatStrDynamic(char*& orig, const char* add)
+{
+	if(!orig) return BMD_ERROR_NULL_STRING;
+	if(!add) return BMD_ERROR_NULL_STRING;
+	int bufferSize = NULL_TERM_SIZE + strlen(orig) + strlen(add);
+	char* buffer = (char*) malloc(bufferSize);
+	int error = BMD_NO_ERROR;
+	if(strlen(orig) > 0)
+		copyStr(buffer, orig);
+	error = concatStr(buffer, add);
+	if(!error) orig = buffer;
+	return error;
+}
+
+
+int concatStrDynamic(char*& orig, const char* add, int start, int stop)
+{
+	if(!orig) return BMD_ERROR_NULL_STRING;
+	if(!add) return BMD_ERROR_NULL_STRING;
+	int bufferSize = NULL_TERM_SIZE + strlen(orig) + strlen(add);
+	char* buffer = (char*) malloc(bufferSize);
+	int error = BMD_NO_ERROR;
+	if(strlen(orig) > 0)
+		copyStr(buffer, orig);
+	error = concatStr(buffer, add, start, stop);
+	if(!error) orig = buffer;
+	return error;
+}
+
+
+int concatStrDynamic(char*& orig, const char* add, int stop)
+{
+	if(!orig) return BMD_ERROR_NULL_STRING;
+	if(!add) return BMD_ERROR_NULL_STRING;
+	int bufferSize = NULL_TERM_SIZE + strlen(orig) + strlen(add);
+	char* buffer = (char*) malloc(bufferSize);
+	int error = BMD_NO_ERROR;
+	if(strlen(orig) > 0)
+		copyStr(buffer, orig);
+	error = concatStr(buffer, add, stop);
+	if(!error) orig = buffer;
+	return error;
+}
+
 char* substr(const char* str, int start, int stop)
 {
 	if (!str)

@@ -23,6 +23,7 @@
 #define BMD_STRUTIL_H
 
 #define NULL_TERM '\0'
+#define NULL_TERM_SIZE sizeof(char)
 
 
 /**
@@ -70,28 +71,70 @@ extern int copyStrDynamic_s(char*& dest, const char* src, int max);
 extern int copyStrDynamic(char*& dest, const char* src);
 
 /**
-* Concatenates two C-Style strings with unknown lengths
-* @param orig The original C-String
+* Concatenates two C-Style strings
+* @param orig The original C-String. Must not be a dynamic array
 * @param add The C-String to append to orig
+* @return 0 if no error, non-zero if error
 */
 extern int concatStr(char* orig, const char* add);
 
 /**
-* Concatenates two C-Style strings with unknown lengths
-* @param orig The original C-String
+* Concatenates two C-Style strings
+* @param orig The original C-String. Must not be a dynamic array
 * @param add The C-String to append to orig
 * @param start The index to start concatenating at
 * @param stop The index to stop concatenating at
+* @return 0 if no error, non-zero if error
 */
 extern int concatStr(char* orig, const char* add, int start, int stop);
 
 /**
-* Concatenates two C-Style strings with unknown lengths
-* @param orig The original C-String
+* Concatenates two C-Style strings
+* @param orig The original C-String. Must not be a dynamic array
 * @param add The C-String to append to orig
 * @param stop The index to stop concatenating at
+* @return 0 if no error, non-zero if error
 */
 extern int concatStr(char* orig, const char* add, int stop);
+
+/**
+* Concatenates two C-Style strings
+* <p>
+* Due to dynamic allocation being used, when your code is done with the copied string (dest),
+* be sure to call free(dest)!
+* </p>
+* @param orig The original C-String. Meant for dynamic arrays, if the array is static with a defined size use concatStr
+* @param add The C-String to append to orig
+* @return 0 if no error, non-zero if error
+*/
+extern int concatStrDynamic(char*& orig, const char* add);
+
+/**
+* Concatenates two C-Style strings
+* <p>
+* Due to dynamic allocation being used, when your code is done with the copied string (dest),
+* be sure to call free(dest)!
+* </p>
+* @param orig The original C-String. Meant for dynamic arrays, if the array is static with a defined size use concatStr
+* @param add The C-String to append to orig
+* @param start The index to start concatenating at
+* @param stop The index to stop concatenating at
+* @return 0 if no error, non-zero if error
+*/
+extern int concatStrDynamic(char*& orig, const char* add, int start, int stop);
+
+/**
+* Concatenates two C-Style strings
+* <p>
+* Due to dynamic allocation being used, when your code is done with the copied string (dest),
+* be sure to call free(dest)!
+* </p>
+* @param orig The original C-String. Meant for dynamic arrays, if the array is static with a defined size use concatStr
+* @param add The C-String to append to orig
+* @param stop The index to stop concatenating at
+* @return 0 if no error, non-zero if error
+*/
+extern int concatStrDynamic(char*& orig, const char* add, int stop);
 
 /**
 * Captures a sub string contained within str ranging from [start - (stop - 1)]
