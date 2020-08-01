@@ -69,6 +69,7 @@ int copyStrDynamic_s(char*& dest, const char* src, int max)
 {
 	int bufferSize = sizeof(char) + strlen(src);
 	char* buffer = (char*) malloc(bufferSize);
+	if(!buffer) return BMD_ERROR_INVALID_MEMORY_ALLOCATION;
 	int size = copyStr_s(buffer, src, max);
 	dest = buffer;
 	return size;
@@ -78,6 +79,7 @@ int copyStrDynamic(char*& dest, const char* src)
 {
 	int bufferSize = sizeof(char) + strlen(src);
 	char* buffer = (char*) malloc(bufferSize);
+	if(!buffer) return BMD_ERROR_INVALID_MEMORY_ALLOCATION;
 	int size = copyStr(buffer, src);
 	dest = buffer;
 	return size;
@@ -132,47 +134,50 @@ int concatStr(char* orig, const char* add, int stop)
 	return concatStr(orig, add, -1, stop);
 }
 
-int concatStrDynamic(char*& orig, const char* add)
+int concatStrDynamic(char** orig, const char* add)
 {
 	if(!orig) return BMD_ERROR_NULL_STRING;
 	if(!add) return BMD_ERROR_NULL_STRING;
-	int bufferSize = NULL_TERM_SIZE + strlen(orig) + strlen(add);
+	int bufferSize = NULL_TERM_SIZE + strlen(*orig) + strlen(add);
 	char* buffer = (char*) malloc(bufferSize);
+	if(!buffer) return BMD_ERROR_INVALID_MEMORY_ALLOCATION;
 	int error = BMD_NO_ERROR;
-	if(strlen(orig) > 0)
-		copyStr(buffer, orig);
+	if(strlen(*orig) > 0)
+		copyStr(buffer, *orig);
 	error = concatStr(buffer, add);
-	if(!error) orig = buffer;
+	if(!error) *orig = buffer;
 	return error;
 }
 
 
-int concatStrDynamic(char*& orig, const char* add, int start, int stop)
+int concatStrDynamic(char** orig, const char* add, int start, int stop)
 {
 	if(!orig) return BMD_ERROR_NULL_STRING;
 	if(!add) return BMD_ERROR_NULL_STRING;
-	int bufferSize = NULL_TERM_SIZE + strlen(orig) + strlen(add);
+	int bufferSize = NULL_TERM_SIZE + strlen(*orig) + strlen(add);
 	char* buffer = (char*) malloc(bufferSize);
+	if(!buffer) return BMD_ERROR_INVALID_MEMORY_ALLOCATION;
 	int error = BMD_NO_ERROR;
-	if(strlen(orig) > 0)
-		copyStr(buffer, orig);
+	if(strlen(*orig) > 0)
+		copyStr(buffer, *orig);
 	error = concatStr(buffer, add, start, stop);
-	if(!error) orig = buffer;
+	if(!error) *orig = buffer;
 	return error;
 }
 
 
-int concatStrDynamic(char*& orig, const char* add, int stop)
+int concatStrDynamic(char** orig, const char* add, int stop)
 {
 	if(!orig) return BMD_ERROR_NULL_STRING;
 	if(!add) return BMD_ERROR_NULL_STRING;
-	int bufferSize = NULL_TERM_SIZE + strlen(orig) + strlen(add);
+	int bufferSize = NULL_TERM_SIZE + strlen(*orig) + strlen(add);
 	char* buffer = (char*) malloc(bufferSize);
+	if(!buffer) return BMD_ERROR_INVALID_MEMORY_ALLOCATION;
 	int error = BMD_NO_ERROR;
-	if(strlen(orig) > 0)
-		copyStr(buffer, orig);
+	if(strlen(*orig) > 0)
+		copyStr(buffer, *orig);
 	error = concatStr(buffer, add, stop);
-	if(!error) orig = buffer;
+	if(!error) *orig = buffer;
 	return error;
 }
 
@@ -235,11 +240,12 @@ int lastIndexOf(const char* str, char c)
 }
 
 
-int indicesOf(const char* str, char c, int*& indices)
+int indicesOf(const char* str, char c, int** indices)
 {
 	if(!str) return BMD_ERROR_NULL_STRING;
 	int n = 0;
 	int* ret = (int*)malloc(strlen(str) * sizeof(int));
+	if(!ret) return BMD_ERROR_INVALID_MEMORY_ALLOCATION;
 	for(int i = 0; i < strlen(str); i++)
 	{
 		if(str[i] == c)
@@ -248,6 +254,6 @@ int indicesOf(const char* str, char c, int*& indices)
 			n++;
 		}
 	}
-	indices = ret;
+	*indices = ret;
 	return n;
 }

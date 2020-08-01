@@ -103,11 +103,11 @@ extern int concatStr(char* orig, const char* add, int stop);
 * Due to dynamic allocation being used, when your code is done with the copied string (dest),
 * be sure to call free(dest)!
 * </p>
-* @param orig The original C-String. Meant for dynamic arrays, if the array is static with a defined size use concatStr
+* @param orig Pointer to the original C-String. Meant for dynamic arrays, if the array is static with a defined size use concatStr
 * @param add The C-String to append to orig
 * @return 0 if no error, non-zero if error
 */
-extern int concatStrDynamic(char*& orig, const char* add);
+extern int concatStrDynamic(char** orig, const char* add);
 
 /**
 * Concatenates two C-Style strings
@@ -115,13 +115,13 @@ extern int concatStrDynamic(char*& orig, const char* add);
 * Due to dynamic allocation being used, when your code is done with the copied string (dest),
 * be sure to call free(dest)!
 * </p>
-* @param orig The original C-String. Meant for dynamic arrays, if the array is static with a defined size use concatStr
+* @param orig Pointer to the original C-String. Meant for dynamic arrays, if the array is static with a defined size use concatStr
 * @param add The C-String to append to orig
 * @param start The index to start concatenating at
 * @param stop The index to stop concatenating at
 * @return 0 if no error, non-zero if error
 */
-extern int concatStrDynamic(char*& orig, const char* add, int start, int stop);
+extern int concatStrDynamic(char** orig, const char* add, int start, int stop);
 
 /**
 * Concatenates two C-Style strings
@@ -129,12 +129,12 @@ extern int concatStrDynamic(char*& orig, const char* add, int start, int stop);
 * Due to dynamic allocation being used, when your code is done with the copied string (dest),
 * be sure to call free(dest)!
 * </p>
-* @param orig The original C-String. Meant for dynamic arrays, if the array is static with a defined size use concatStr
+* @param orig Pointer to the original C-String. Meant for dynamic arrays, if the array is static with a defined size use concatStr
 * @param add The C-String to append to orig
 * @param stop The index to stop concatenating at
 * @return 0 if no error, non-zero if error
 */
-extern int concatStrDynamic(char*& orig, const char* add, int stop);
+extern int concatStrDynamic(char** orig, const char* add, int stop);
 
 /**
 * Captures a sub string contained within str ranging from [start - (stop - 1)]
@@ -174,9 +174,10 @@ extern int lastIndexOf(const char* str, char c);
 * Retrieves every index where the given character exists and stores them in an int* (array)
 * @param str The string containing the character
 * @param c The character to look for
-* @param indices The int* to store the indices in
-* @return The length of the indices array, or an error code (less than 0) if its not found
+* @param indices Pointer to the int array to store the indices in
+* @return The length of the indices array, 0 if it's not found, or an error code (less than 0)
+*     if there was an error while allocating memory
 */
-extern int indicesOf(const char* str, char c, int*& indices);
+extern int indicesOf(const char* str, char c, int** indices);
 
 #endif //BMD_STRUTIL_H

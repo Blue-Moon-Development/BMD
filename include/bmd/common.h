@@ -24,12 +24,16 @@
 
 
 #ifndef DEBUGGING
-// prefer if(DEBUGGING) over #ifdef _DEBUG so that even after code is compiled the debug flag can be changed
-#define DEBUGGING 1
+	#define DEBUGGING 1
 #endif // DEBUGGING
 
+
+#ifndef BMD_VERBOSE
+	#define BMD_VERBOSE 0
+#endif // BMD_VERBOSE
+
 // If DEBUGGING is 1
-#if DEBUGGING
+#if DEBUGGING || BMD_VERBOSE
 
 #include <stdio.h>
 #include <assert.h>

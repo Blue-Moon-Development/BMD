@@ -34,6 +34,11 @@
 
 #include "bmd/types.h"
 
+
+/**
+* The callback function pointer of type T that gets called by getLength to determine if the value
+* has reached a null terminating point
+*/
 template<typename T>
 using length_callback = int (const T* arr);
 
@@ -137,19 +142,148 @@ using length_callback = int (const T* arr);
 // so doesn't look like we can support that
 // Though at some point it reaches '-nan' maybe that can be detected and return -1 as the size?
 
+/**
+* Attempts to retrieve the length of an array, even if its been decayed to a pointer by being passed as a function parameter.
+*
+* It should be noted that this is not 100% foolproof and only works if the defined null terminating values are not values in the array.
+* In addition, compilers allocate memory in different ways, so the default null terminating values may not be correct for your compiler
+* @tparam T The type of data stored in the array
+* @param arr The array
+* @param lcb The length_callback function pointer to be called when checking for the null terminating value
+* @return The possible length of the array, or -1 if it could not be estimated or if the array was null
+*/
 template<typename T>
 extern int getLength(const T* arr, length_callback<T> lcb);
 
+/**
+* Attempts to retrieve the length of an array, even if its been decayed to a pointer by being passed as a function parameter.
+*
+* It should be noted that this is not 100% foolproof and only works if the defined null terminating values are not values in the array.
+* In addition, compilers allocate memory in different ways, so the default null terminating values may not be correct for your compiler
+* @param arr The array
+* @return The possible length of the array, or -1 if it could not be estimated or if the array was null
+*/
 extern int getLength(const char* arr);
+
+/**
+* Attempts to retrieve the length of an array, even if its been decayed to a pointer by being passed as a function parameter.
+*
+* It should be noted that this is not 100% foolproof and only works if the defined null terminating values are not values in the array.
+* In addition, compilers allocate memory in different ways, so the default null terminating values may not be correct for your compiler
+* @param arr The array
+* @return The possible length of the array, or -1 if it could not be estimated or if the array was null
+*/
 extern int getLength(const short* arr);
+
+/**
+* Attempts to retrieve the length of an array, even if its been decayed to a pointer by being passed as a function parameter.
+*
+* It should be noted that this is not 100% foolproof and only works if the defined null terminating values are not values in the array.
+* In addition, compilers allocate memory in different ways, so the default null terminating values may not be correct for your compiler
+* @param arr The array
+* @return The possible length of the array, or -1 if it could not be estimated or if the array was null
+*/
 extern int getLength(const int* arr);
+
+/**
+* Attempts to retrieve the length of an array, even if its been decayed to a pointer by being passed as a function parameter.
+*
+* It should be noted that this is not 100% foolproof and only works if the defined null terminating values are not values in the array.
+* In addition, compilers allocate memory in different ways, so the default null terminating values may not be correct for your compiler
+* @param arr The array
+* @return The possible length of the array, or -1 if it could not be estimated or if the array was null
+*/
 extern int getLength(const long* arr);
+
+/**
+* Attempts to retrieve the length of an array, even if its been decayed to a pointer by being passed as a function parameter.
+*
+* It should be noted that this is not 100% foolproof and only works if the defined null terminating values are not values in the array.
+* In addition, compilers allocate memory in different ways, so the default null terminating values may not be correct for your compiler
+* @param arr The array
+* @return The possible length of the array, or -1 if it could not be estimated or if the array was null
+*/
 extern int getLength(const long long* arr);
+
+/**
+* Attempts to retrieve the length of an array, even if its been decayed to a pointer by being passed as a function parameter.
+*
+* It should be noted that this is not 100% foolproof and only works if the defined null terminating values are not values in the array.
+* In addition, compilers allocate memory in different ways, so the default null terminating values may not be correct for your compiler
+* @param arr The array
+* @return The possible length of the array, or -1 if it could not be estimated or if the array was null
+*/
 extern int getLength(const uchar* arr);
+
+/**
+* Attempts to retrieve the length of an array, even if its been decayed to a pointer by being passed as a function parameter.
+*
+* It should be noted that this is not 100% foolproof and only works if the defined null terminating values are not values in the array.
+* In addition, compilers allocate memory in different ways, so the default null terminating values may not be correct for your compiler
+* @param arr The array
+* @return The possible length of the array, or -1 if it could not be estimated or if the array was null
+*/
 extern int getLength(const ushort* arr);
+
+/**
+* Attempts to retrieve the length of an array, even if its been decayed to a pointer by being passed as a function parameter.
+*
+* It should be noted that this is not 100% foolproof and only works if the defined null terminating values are not values in the array.
+* In addition, compilers allocate memory in different ways, so the default null terminating values may not be correct for your compiler
+* @param arr The array
+* @return The possible length of the array, or -1 if it could not be estimated or if the array was null
+*/
 extern int getLength(const uint* arr);
+
+/**
+* Attempts to retrieve the length of an array, even if its been decayed to a pointer by being passed as a function parameter.
+*
+* It should be noted that this is not 100% foolproof and only works if the defined null terminating values are not values in the array.
+* In addition, compilers allocate memory in different ways, so the default null terminating values may not be correct for your compiler
+* @param arr The array
+* @return The possible length of the array, or -1 if it could not be estimated or if the array was null
+*/
 extern int getLength(const ulong* arr);
+
+/**
+* Attempts to retrieve the length of an array, even if its been decayed to a pointer by being passed as a function parameter.
+*
+* It should be noted that this is not 100% foolproof and only works if the defined null terminating values are not values in the array.
+* In addition, compilers allocate memory in different ways, so the default null terminating values may not be correct for your compiler
+* @param arr The array
+* @return The possible length of the array, or -1 if it could not be estimated or if the array was null
+*/
 extern int getLength(const ulonglong* arr);
+
+/**
+* Attempts to retrieve the length of an array, even if its been decayed to a pointer by being passed as a function parameter.
+*
+* It should be noted that this is not 100% foolproof and only works if the defined null terminating values are not values in the array.
+* In addition, compilers allocate memory in different ways, so the default null terminating values may not be correct for your compiler
+* @param arr The array
+* @return The possible length of the array, or -1 if it could not be estimated or if the array was null
+*/
+extern int getLength(const flt32* arr);
+
+/**
+* Attempts to retrieve the length of an array, even if its been decayed to a pointer by being passed as a function parameter.
+*
+* It should be noted that this is not 100% foolproof and only works if the defined null terminating values are not values in the array.
+* In addition, compilers allocate memory in different ways, so the default null terminating values may not be correct for your compiler
+* @param arr The array
+* @return The possible length of the array, or -1 if it could not be estimated or if the array was null
+*/
+extern int getLength(const flt64* arr);
+
+/**
+* Attempts to retrieve the length of an array, even if its been decayed to a pointer by being passed as a function parameter.
+*
+* It should be noted that this is not 100% foolproof and only works if the defined null terminating values are not values in the array.
+* In addition, compilers allocate memory in different ways, so the default null terminating values may not be correct for your compiler
+* @param arr The array
+* @return The possible length of the array, or -1 if it could not be estimated or if the array was null
+*/
+extern int getLength(const flt96* arr);
 
 
 #endif //BMD_ARRAYS_H

@@ -25,6 +25,7 @@
 #include <stdio.h>
 #include <limits>
 #include <iostream>
+#include <bmd/arrays.h>
 
 void test_substr()
 {
@@ -44,7 +45,7 @@ void test_index_finder()
 	printf("Last L at: %i\n", last_L);
 
 	int* ptr;
-	int len = indicesOf("this is a little monkey, let\'s give him lot\'s of love!", 'l', ptr);
+	int len = indicesOf("this is a little monkey, let\'s give him lot\'s of love!", 'l', &ptr);
 	printf("\nLs from the given length: ");
 	for (int i = 0; i < len; i++)
 	{
@@ -54,230 +55,15 @@ void test_index_finder()
 }
 
 
-
-int getSize(int* arr)
-{
-	if (!arr) return 0;
-	int n = 0;
-	while (*arr != -858993460 && *arr != -33686019) //second check for new int[size], needs more testing
-	{
-		printf("Int at index %i is %i\n", n, *arr);
-		arr++;
-		n++;
-	}
-
-	return n;
-}
-
-int getSize(unsigned int* arr)
-{
-	if (!arr) return 0;
-	int n = 0;
-	while (*arr != -858993460)
-	{
-		printf("Int at index %i is %i\n", n, *arr);
-		arr++;
-		n++;
-	}
-
-	return n;
-}
-#include <math.h>
-int getSize(float* arr)
-{
-	if (!arr) return 0;
-	int n = 0;
-	while (*arr != -107374176.0f)
-	{
-		if(nan((char*)arr)) return -1;
-		printf("Float at index %i is %f\n", n, *arr);
-		arr++;
-		n++;
-	}
-
-	return n;
-}
-
-int getSize(double* arr)
-{
-	if (!arr) return 0;
-	int n = 0;
-	while (*arr != -92559631349317830736831783200707727132248687965119994463780864.0)
-	{
-		printf("Double at index %i is %f\n", n, *arr);
-		arr++;
-		n++;
-	}
-
-	return n;
-}
-
-int getSize(short* arr)
-{
-	if (!arr) return 0;
-	int n = 0;
-	while (*arr != -13108 && *arr != -515)
-	{
-		printf("Short at index %i is %i\n", n, *arr);
-		arr++;
-		n++;
-	}
-
-	return n;
-}
-
-int getSize(char* arr)
-{
-	if (!arr) return 0;
-	int n = 0;
-	while (*arr)
-	{
-		printf("Char at index %i is %i (%c)\n", n, *arr, *arr);
-		arr++;
-		n++;
-	}
-
-	return n;
-}
-
-int getSize(const char* arr)
-{
-	if (!arr) return 0;
-	int n = 0;
-	while (*arr)
-	{
-		printf("Char at index %i is %i (%c)\n", n, *arr, *arr);
-		arr++;
-		n++;
-	}
-
-	return n;
-}
-
-int getSize(long double* arr)
-{
-
-	if (!arr) return 0;
-	int n = 0;
-	while (*arr != -92559631349317830736831783200707727132248687965119994463780864.0)
-	{
-		printf("Char at index %i is %Lf\n", n, *arr);
-		arr++;
-		n++;
-	}
-
-	return n;
-}
-
-int getSize(long long* arr)
-{
-	if (!arr) return 0;
-	int n = 0;
-	while (*arr != -3689348814741910324)
-	{
-		printf("Char at index %i is %lli\n", n, *arr);
-		arr++;
-		n++;
-	}
-
-	return n;
-}
-
-int getSize(long* arr)
-{
-	if (!arr) return 0;
-	int n = 0;
-	while (*arr != -858993460)
-	{
-		printf("Char at index %i is %li\n", n, *arr);
-		arr++;
-		n++;
-	}
-
-	return n;
-}
-
 void test_arr_length()
 {
-	int min = std::numeric_limits<int>::min();
-	printf("Min value for an int is %i\n", min);
-	// size 1 -> 19
-	// size 2 -> 18
-	// size 3, 4, 5, 6 -> 26
-	// size 7, 8, 9, 10 -> 30
-	// size 11, 12, 13, 14 -> 34
-	int test[] = { 1, 2, 3, 4, 5, 6, 7, 0, 9 };
-	int l = sizeof(test) / sizeof(int);
+	float a[] = {1, 2, 3};
+	int len = getLength(a);
+	printf("Length is: %i\n", len);
 
-	int len = getSize(test);
-	printf("Size of int is %zu\n", sizeof(int));
-	printf("Length of test[] is %i\n", len);
-
-	//int diff = len - l;
-	//printf("Difference is %i\n", diff);
-
-	float testf[] = { 1.2f, 0.1f, 2.3f };
-	len = getSize(testf);
-	printf("Length of testf[] is %i\n", len);
-
-
-	double testd[] = { 1.2, 3, 4.5, 5.7 };
-	len = getSize(testd);
-	printf("Length of testd[] is %i\n", len);
-
-	short tests[] = { 1, 2, 3 };
-	len = getSize(tests);
-	printf("Length of tests[] is %i\n", len);
-
-	char testc[] = { "12abc 6789" };
-	len = getSize(testc);
-	printf("Length of testc[] is %i\n", len);
-	printf("strlen returns %zu\n", strlen(testc));
-
-	char* dyntest = "12345";
-	len = getSize(dyntest);
-	printf("Length of dyntest is %i\n", len);
-
-	long testl[] = { 1, 2, 343545L };
-	len = getSize(testl);
-	printf("Length of testl[] is %i\n", len);
-
-	long long testll[] = { 1, 2, 3, 4 };
-	len = getSize(testll);
-	printf("Length of testll[] is %i\n", len);
-
-	long double testld[] = { 1.4, 4, 5, 4, 5, 7, 6.7 };
-	len = getSize(testld);
-	printf("Length of testld[] is %i\n", len);
-
-	unsigned int testui[] { 1, 2, 3 };
-	len = getSize(testui);
-	printf("Length of testui[] is %i\n", len);
-
-	int* dyntesti = new int[3];
-	len = getSize(dyntesti);
-	printf("Length of dyntesti is %i\n", len);
-
-	dyntesti = new int[5];
-	dyntesti[ 0 ] = 1;
-	dyntesti[ 1 ] = 2;
-	dyntesti[ 3 ] = 4;
-	len = getSize(dyntesti);
-	printf("Length of dyntesti is %i\n", len);
-
-	delete[] dyntesti;
-
-	const char* str = "123456";
-	len = getSize(str);
-	printf("Length of str is %i\n", len);
-
-	short* dynshort = new short[5];
-	dynshort[0] = 1;
-	dynshort[4] = 5;
-	len = getSize(dynshort);
-	printf("Length of dynshort is %i\n", len);
-
-	delete[] dynshort;
+	double b[] = {5, 2, 45, 5, 2};
+	len = getLength(b);
+	printf("Length is: %i\n", len);
 }
 
 void test_concat()
@@ -298,19 +84,19 @@ void test_concat()
 
 	char* maybe = "hopefully";
 	const char* add = " this works";
-	int e = concatStrDynamic(maybe, add);
+	int e = concatStrDynamic(&maybe, add);
 	printf("Error is %i  maybe is: %s\n", e, maybe);
 	if(!e && maybe)
 		free(maybe);
 
 	char* one = "one";
-	int e2 = concatStrDynamic(one, " two three four!", 4, 9);
+	int e2 = concatStrDynamic(&one, " two three four!", 4, 9);
 	printf("one: %s\n", one);
 	if(!e2 && one)
 		free(one);
 
 	char* abc  = "abc";
-	int e3 = concatStrDynamic(abc, " easy as 1 2 3!", 5);
+	int e3 = concatStrDynamic(&abc, " easy as 1 2 3!", 5);
 	printf("abc: %s\n", abc);
 	if(!e3 && abc)
 		free(abc);
@@ -347,7 +133,7 @@ void test_copy()
 
 void test_arr_as_param(int* arr)
 {
-	printf("Param arr length is: %i\n", getSize(arr));
+	//printf("Param arr length is: %i\n", getSize(arr));
 }
 
 // this works, and I believe would work in normal C as well (as C doesn't support passing by ref I believe)
@@ -363,47 +149,14 @@ void test_ptr_ref(char** dp, const char* p)
 
 int main(int argc, char** argv)
 {
-	//char -> -3
-	int len = 0;
-	char* dynshort = new char[5];
-	printf("Size of dynshort is %zu\n", sizeof(dynshort));
-	dynshort[0] = 1;
-	dynshort[3] = 5;
-	dynshort[4] = 0;
-	//dynshort[9] = 10;
-	len = getSize(dynshort);
-	printf("Length of dynshort is %i\n", len);
 
-	delete[] dynshort;
 
 	//test_substr();
 	//test_index_finder();
 	//test_concat();
 	//test_copy();
-	//test_arr_length();
-	//
-	//char* something = "something";
-	//test_ptr_ref(&something, " else");
-	//printf("something is: %s\n", something);
-	//
-	//char* a = "some data";
-	//char* temp = a;
-	//char* b = "some other data";
-	//printf("Before assignment. A = %s, B = %s\n", a, b);
-	//test_ptr_ref(&a, b);
-	////a = b;
-	//printf("After assignment. A = %s, B = %s\n", a, b);
-	//// and this right here is why test_ptr_ref is not ideal
-	//b = "changed!";
-	//printf("After B was changed. A = %s, B = %s\n", a, b);
-	//a = temp;
-	//b = "original";
-	//printf("a after temp assign: %s\n", a);
-	//copyStrDynamic(a, b);
-	//printf("After copy. A = %s, B= %s\n", a, b);
-	//b = "new change!";
-	//printf("After B was changed again. A = %s, B = %s\n", a, b);
-	//if(a) free(a);
+	test_arr_length();
+
 
 	//int t[] = {
 	//		1, 2, 3,
@@ -411,8 +164,4 @@ int main(int argc, char** argv)
 	//};
 	//test_arr_as_param(t);
 
-	//const char* test = "test const";
-	//char* test2 = "non const test";
-	//test2 = const_cast<char*>(test); // safer way of doing copyStrDynamic, but only works in C++ not C. Not sure about performance
-	//printf("Test 2: %s\n", test2);
 }
