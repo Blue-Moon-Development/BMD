@@ -24,27 +24,6 @@
 #include "bmd/common.h"
 #include "bmd/strutil.h"
 
-int safeCopy_internal(char* dest, const char* src, int n, int max, const char* file, int line)
-{
-	int character;
-	const char* copyOfSrc = src;
-	do
-	{
-		if (n >= max)
-		{
-			if (!DEBUGGING) return BMD_ERROR_EXCEEDS_LENGTH;
-			fprintf(stderr, "Error: String \"%s\" exceeds max length allowed (%i) on line %i of %s\n",
-					copyOfSrc, max, line, file);
-					BMD_ASSERT(0);
-			return BMD_ERROR_EXCEEDS_LENGTH;
-		}
-		character = *src++;
-		dest[ n ] = character;
-		n++;
-	} while (character);
-
-	return n;
-}
 
 const char* getExt(file_t* file)
 {
@@ -59,7 +38,7 @@ const char* getExt(file_t* file)
 		}
 	}
 
-	if (period) safeCopy(file->ext, period, 0, MAX_EXT_LENGTH);
+	if (period) copyStr_s(file->ext, period, MAX_EXT_LENGTH);
 	else file->ext[ 0 ] = 0;
 	return file->ext;
 }
@@ -71,7 +50,7 @@ int doesFileHaveExt(file_t* file, const char* ext)
 }
 
 
-int loadFile(const char* dirPath, const char* fileName, file_t& file)
+int loadFile(const char* dirPath, const char* fileName, file_t* file)
 {
 	int error = BMD_NO_ERROR;
 	dir_t dir;
@@ -84,62 +63,92 @@ int loadFile(const char* dirPath, const char* fileName, file_t& file)
 		if (error) return error;
 		if (temp.isFile && strcmp(temp.name, fileName) == 0)
 		{
-			file = temp;
+			copyStr_s(file->path, temp.path, MAX_PATH_LENGTH);
+			copyStr_s(file->name, temp.name, MAX_FILENAME_LENGTH);
+			copyStr_s(file->ext, temp.ext, MAX_EXT_LENGTH);
+			file->isDir = temp.isDir;
+			file->isFile = temp.isFile;
+			file->size = temp.size;
 			closeDir(&dir);
 			return error;
 		}
 		error = nextFile(&dir);
 		if (error) return error;
 	}
+
 	closeDir(&dir);
 	return BMD_ERROR_FILE_NOT_FOUND;
 }
 
-int loadFile(const char* filePath, file_t& file)
+int loadFile(const char* filePath, file_t* file)
 {
-	const char* lastSlash = strrchr(filePath, '/');
-	int lastSlashIndex = 0;
-	if(lastSlash)
-		lastSlashIndex = lastSlash - filePath;
-	else
-	{
-		lastSlash = strrchr(filePath, '\\');
-		if(lastSlash)
-			lastSlashIndex = lastSlash - filePath;
-		else return BMD_ERROR_CHAR_NOT_FOUND;
-	}
+	int lastSlashIndex = lastIndexOf(filePath, '/');
+	if (lastSlashIndex < 0)
+		lastSlashIndex = lastIndexOf(filePath, '\\');
+	if (lastSlashIndex < 0)
+		return lastSlashIndex;
+	char* dirName = substr(filePath, 0, lastSlashIndex);
+	char* fileName = substr(filePath, lastSlashIndex + 1);
 
-	if(lastSlashIndex)
-	{
-
-	} else return BMD_ERROR_CHAR_NOT_FOUND; // Just in case for some reason the previous checks didn't catch it
-
-	return BMD_NO_ERROR;
+	return loadFile(dirName, fileName, file);
 }
 
-char* readFile(const char* file)
+int readFile(const char* file, char** data)
 {
 	if (!doesFileExist(file)) return NULL;
 	FILE* f = fopen(file, "rt");
 	fseek(f, 0, SEEK_END);
 	ulong len = ftell(f);
-	char* data = new char[len + 1];
+	char* buffer = (char*) malloc(len + 1);
+	if (!buffer) return BMD_ERROR_INVALID_MEMORY_ALLOCATION;
+	memset(buffer, 0, len + 1);
 	fseek(f, 0, SEEK_SET);
-	fread(data, 1, len, f);
-	return data;
+	fread(buffer, 1, len, f);
+	*data = buffer;
+	return BMD_NO_ERROR;
 }
 
-int loadFileAndReadContents(dir_t* dir, file_t* file)
+int loadFileAndReadContents(const char* dir, const char* fileName, file_t* file)
 {
-	int error = loadFile(dir, file);
-	if (!error)
+	int error = BMD_NO_ERROR;
+	dir_t dirt;
+	error = openDir(&dirt, dir);
+	if (error) return error;
+	file_t temp;
+	while (dirt.hasNext)
 	{
-		if (!doesFileExist(file->path)) return BMD_ERROR_FILE_NOT_FOUND;
-		file->contents = readFile(file->path);
-		if (!file->contents) return BMD_ERROR_READ_FILE;
-		return BMD_NO_ERROR;
+		error = loadFileAndReadContents(&dirt, &temp);
+		if (error) return error;
+		if (temp.isFile && strcmp(temp.name, fileName) == 0)
+		{
+			copyStr_s(file->path, temp.path, MAX_PATH_LENGTH);
+			copyStr_s(file->name, temp.name, MAX_FILENAME_LENGTH);
+			copyStr_s(file->ext, temp.ext, MAX_EXT_LENGTH);
+			file->isDir = temp.isDir;
+			file->isFile = temp.isFile;
+			file->size = temp.size;
+			file->contents = temp.contents;
+			closeDir(&dirt);
+			return error;
+		}
+		error = nextFile(&dirt);
+		if (error) return error;
 	}
-	return error;
+	closeDir(&dirt);
+	return BMD_ERROR_FILE_NOT_FOUND;
+}
+
+int loadFileAndReadContents(const char* filePath, file_t* file)
+{
+	int lastSlashIndex = lastIndexOf(filePath, '/');
+	if (lastSlashIndex < 0)
+		lastSlashIndex = lastIndexOf(filePath, '\\');
+	if (lastSlashIndex < 0)
+		return lastSlashIndex;
+	char* dirName = substr(filePath, 0, lastSlashIndex);
+	char* fileName = substr(filePath, lastSlashIndex + 1);
+
+	return loadFileAndReadContents(dirName, fileName, file);
 }
 
 int readFileContents(file_t* file)
@@ -148,8 +157,11 @@ int readFileContents(file_t* file)
 	if (!doesFileExist(file->path)) return BMD_ERROR_FILE_NOT_FOUND;
 	FILE* f;
 	fopen_s(&f, file->path, "rt");
-	char* data;
-	fread(data, 1, file->size, f);
+	//fseek(f, 0, SEEK_END);
+	//ulong len = ftell(f);
+	char* data = (char*) malloc(file->size);
+	memset(data, 0, file->size);
+	fread(data, 1, file->size - 1, f);
 	file->contents = data;
 	if (!file->contents) return BMD_ERROR_READ_FILE;
 	return BMD_NO_ERROR;
@@ -179,22 +191,22 @@ int loadFile(dir_t* dir, file_t* file)
 {
 			BMD_ASSERT(dir->handle != INVALID_HANDLE_VALUE);
 	int n = 0;
+	int error = BMD_NO_ERROR;
 	char* dirPath = dir->path;
 	char* filePath = file->path;
-
-	n = safeCopy(filePath, dirPath, 0, MAX_PATH_LENGTH);
-	if (n == BMD_ERROR_EXCEEDS_LENGTH) return n;
-	n = safeCopy(filePath, "/", n - 1, MAX_PATH_LENGTH);
-	if (n == BMD_ERROR_EXCEEDS_LENGTH) return n;
+	n = copyStr_s(filePath, dirPath, MAX_PATH_LENGTH);
+	if (n < 0) return n;
+	error = concatStr(filePath, "/");
+	if (error) return error;
 
 	char* dirName = dir->fdata.cFileName;
 	char* fileName = file->name;
 
-	int errCheck = 0;
-	errCheck = safeCopy(fileName, dirName, 0, MAX_FILENAME_LENGTH);
-	if (errCheck == BMD_ERROR_EXCEEDS_LENGTH) return errCheck;
-	errCheck = safeCopy(filePath, fileName, n - 1, MAX_PATH_LENGTH);
-	if (errCheck == BMD_ERROR_EXCEEDS_LENGTH) return errCheck;
+	n = copyStr_s(fileName, dirName, MAX_FILENAME_LENGTH);
+	if (n < 0) return n;
+
+	error = concatStr(filePath, fileName);
+	if (error) return error;
 
 	file->size = ((size_t) dir->fdata.nFileSizeHigh * (MAXDWORD + 1)) + (size_t) dir->fdata.nFileSizeLow;
 	getExt(file);
@@ -205,16 +217,49 @@ int loadFile(dir_t* dir, file_t* file)
 	return BMD_NO_ERROR;
 }
 
+int loadFileAndReadContents(dir_t* dir, file_t* file)
+{
+			BMD_ASSERT(dir->handle != INVALID_HANDLE_VALUE);
+	int n = 0;
+	int error = BMD_NO_ERROR;
+	char* dirPath = dir->path;
+	char* filePath = file->path;
+	n = copyStr_s(filePath, dirPath, MAX_PATH_LENGTH);
+	if (n < 0) return n;
+	error = concatStr(filePath, "/");
+	if (error) return error;
+
+	char* dirName = dir->fdata.cFileName;
+	char* fileName = file->name;
+
+	n = copyStr_s(fileName, dirName, MAX_FILENAME_LENGTH);
+	if (n < 0) return n;
+
+	error = concatStr(filePath, fileName);
+	if (error) return error;
+
+	file->size = ((size_t) dir->fdata.nFileSizeHigh * (MAXDWORD + 1)) + (size_t) dir->fdata.nFileSizeLow;
+	getExt(file);
+	file->isDir = (dir->fdata.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
+	file->isFile = (dir->fdata.dwFileAttributes & FILE_ATTRIBUTE_NORMAL) != 0 ||
+				   !(dir->fdata.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY);
+	if(file->isFile && !file->isDir)
+		error = readFileContents(file);
+
+	return error;
+}
+
 int openDir(dir_t* dir, const char* path)
 {
 	int n = 0;
-	n = safeCopy(dir->path, path, 0, MAX_PATH_LENGTH);
-	if (n == BMD_ERROR_EXCEEDS_LENGTH) return n;
-	n = safeCopy(dir->path, "\\*", n - 1, MAX_PATH_LENGTH);
-	if (n == BMD_ERROR_EXCEEDS_LENGTH) return n;
+	int error = BMD_NO_ERROR;
+	n = copyStr_s(dir->path, path, MAX_PATH_LENGTH);
+	if (n < 0) return n;
+	error = concatStr(dir->path, "\\*");
+	if (error) return error;
 
 	dir->handle = FindFirstFileA(dir->path, &dir->fdata);
-	dir->path[ n - 3 ] = 0;
+	dir->path[ n - 1 ] = 0;
 
 	if (dir->handle == INVALID_HANDLE_VALUE)
 	{
@@ -265,15 +310,24 @@ int getCreationTime(const char* path, fs_time* time)
 	if (GetFileAttributesExA(path, GetFileExInfoStandard, &info))
 	{
 		time->time = info.ftCreationTime;
-		SYSTEMTIME local = { 0 };
-		FileTimeToSystemTime(&(info.ftCreationTime), &local);
-		//GetLocalTime(&local); // changes it to the current local time
+
+		TIME_ZONE_INFORMATION tzi;
+		int zone = GetTimeZoneInformation(&tzi);
+		SYSTEMTIME utcTime;
+		FileTimeToSystemTime(&(info.ftCreationTime), &utcTime);
+		SYSTEMTIME local;
+		SystemTimeToTzSpecificLocalTime(&tzi, &utcTime, &local);
+		WCHAR* zoneName = nullptr;
+		if (zone == TIME_ZONE_ID_STANDARD)
+			zoneName = tzi.StandardName;
+		else if (zone == TIME_ZONE_ID_DAYLIGHT)
+			zoneName = tzi.DaylightName;
 		// Going for format -> MM/dd/yyyy at hh:mm:ss
 		// That's 22 characters, 23 if we include null terminating character
-		char* formatted = (char*) malloc(23 * sizeof(char));
-		sprintf(formatted, "%02d/%02d/%04d at %02d:%02d:%02d", local.wMonth, local.wDay, local.wYear,
-				local.wHour, local.wMinute, local.wSecond);
-		time->time_str = formatted;
+		//char* formatted = (char*) malloc(23 * sizeof(char));
+		sprintf(time->time_str, "%02d/%02d/%04d at %02d:%02d:%02d %ls", local.wMonth, local.wDay, local.wYear,
+				local.wHour, local.wMinute, local.wSecond, zoneName);
+		//time->time_str = formatted;
 		return BMD_NO_ERROR;
 	}
 
@@ -288,15 +342,25 @@ int getLastModifiedTime(const char* path, fs_time* time)
 	if (GetFileAttributesExA(path, GetFileExInfoStandard, &info))
 	{
 		time->time = info.ftLastWriteTime;
-		SYSTEMTIME local = { 0 };
-		FileTimeToSystemTime(&(info.ftLastWriteTime), &local);
-		//GetLocalTime(&local); // changes it to the current local time
+
+		TIME_ZONE_INFORMATION tzi;
+		int zone = GetTimeZoneInformation(&tzi);
+		SYSTEMTIME utcTime;
+		FileTimeToSystemTime(&(info.ftLastWriteTime), &utcTime);
+		SYSTEMTIME local;
+		SystemTimeToTzSpecificLocalTime(&tzi, &utcTime, &local);
 		// Going for format -> MM/dd/yyyy at hh:mm:ss
 		// That's 22 characters, 23 if we include null terminating character
-		char* formatted = (char*) malloc(23 * sizeof(char));
-		sprintf(formatted, "%02d/%02d/%04d at %02d:%02d:%02d", local.wMonth, local.wDay, local.wYear,
-				local.wHour, local.wMinute, local.wSecond);
-		time->time_str = formatted;
+		//char* formatted = (char*) malloc(30 * sizeof(char));
+		WCHAR* zoneName = (WCHAR*) "";
+		if (zone == TIME_ZONE_ID_STANDARD)
+			zoneName = tzi.StandardName;
+		else if (zone == TIME_ZONE_ID_DAYLIGHT)
+			zoneName = tzi.DaylightName;
+
+		sprintf(time->time_str, "%02d/%02d/%04d at %02d:%02d:%02d %ls", local.wMonth, local.wDay, local.wYear,
+				local.wHour, local.wMinute, local.wSecond, zoneName);
+		//time->time_str = formatted;
 		return BMD_NO_ERROR;
 	}
 
@@ -345,7 +409,7 @@ int getLastModifiedTime(const char* path, fs_time* time)
 	struct stat info;
 	if(stat(path, &info)) return BMD_ERROR_FILE_TIME;
 	time->time = info.st_mtime;
-	time->time_str = ctime(time->time);
+	//time->time_str = ctime(time->time);
 }
 
 int compareTimes(fs_time* a, fs_time* b)

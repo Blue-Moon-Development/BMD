@@ -28,6 +28,28 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include <setjmp.h>
+#include <signal.h>
+
+jmp_buf jump;
+
+void segv(int sig)
+{
+	longjmp(jump, 1);
+}
+
+int memcheck(void* x)
+{
+	volatile char c;
+	int illegal = 0;
+	signal(SIGSEGV, segv);
+	if(!setjmp(jump))
+		c = *(char*) (x);
+	else illegal = 1;
+	signal(SIGSEGV, SIG_DFL);
+	return illegal;
+}
+
 int copyStr_s(char* dest, const char* src, int max)
 {
 	int size = 0;
@@ -44,6 +66,11 @@ int copyStr_s(char* dest, const char* src, int max)
 			return BMD_ERROR_EXCEEDS_LENGTH;
 		}
 		character = *src++;
+		//if(memcheck(dest))
+		//{
+		//	printf("Illegal pointer!\n");
+		//	return -45435;
+		//}
 		dest[ size ] = character;
 		size++;
 	} while (character);
