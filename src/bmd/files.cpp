@@ -83,6 +83,12 @@ int loadFile(const char* dirPath, const char* fileName, file_t* file)
 
 int loadFile(const char* filePath, file_t* file)
 {
+	if(!doesFileExist(filePath))
+	{
+		FILE* f;
+		fopen_s(&f, filePath, "at");
+		fclose(f);
+	}
 	int lastSlashIndex = lastIndexOf(filePath, '/');
 	if (lastSlashIndex < 0)
 		lastSlashIndex = lastIndexOf(filePath, '\\');

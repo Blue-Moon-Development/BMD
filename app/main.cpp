@@ -229,9 +229,9 @@ void test_files()
 
 #include <bmd/timer.h>
 #include <bmd/logger.h>
-
-
-
+#define BMD_PROFILE 0
+#include <bmd/profiler.h>
+#include <iomanip>
 
 int main(int argc, char** argv)
 {
@@ -241,8 +241,11 @@ int main(int argc, char** argv)
 	//char buf[100];
 	//getCurrentTime(buf);
 	//printf("Time is %s\n", buf);
+
 	initLog("./info.log", LOG_MODE_ARCHIVE, 7);
+	PROFILER_START("Log profile");
 	logInfo("This is just a test");
+	PROFILER_END;
 	logInfo("This is just a test 1");
 	logTrace("This is just a test 2");
 	logTrace("This is just a test 3");
@@ -256,10 +259,34 @@ int main(int argc, char** argv)
 	logInfo("This is just a test 10");
 	logInfo("This is just a test 11");
 	logError(getErrorString(-16));
+	char buf[100] = "Something";
+	PROFILER_START("strcat test");
+	strcat(buf, "add this to it");
+	PROFILER_END;
+	char otherBuf[100] = "somehting else";
+	PROFILER_START("concatStr test");
+	concatStr(otherBuf, "add this to it and stuff");
+	PROFILER_END;
+
+	PROFILER_START("cout timer");
+
+	std::cout << "This is " << 23 << " some sample text " << std::setprecision(3) << 0.2344554f <<  " with endl" << std::endl;
+	PROFILER_END;
+
+	PROFILER_START("cout timer no endl");
+	std::cout << "This is " << 23 << " some sample text " << std::setprecision(3) << 0.2344554f <<  " with no endl\n";
+	PROFILER_END;
+
+	PROFILER_START("printf timer");
+
+	printf("This is %i some sample text %.3f with printf\n", 23, 0.2344554f);
+	PROFILER_END;
+
 	//test_substr();
 	//test_index_finder();
 	//test_concat();
 	//test_copy();
+	//
 	//test_arr_length();
 	//test_files();
 	//int t[] = {
@@ -267,6 +294,7 @@ int main(int argc, char** argv)
 	//		4, 5, 6
 	//};
 	//test_arr_as_param(t);
+
 
 }
 
