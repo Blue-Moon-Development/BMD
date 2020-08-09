@@ -180,4 +180,5 @@ extern int lastIndexOf(const char* str, char c);
 */
 extern int indicesOf(const char* str, char c, int** indices);
 
+
 #endif //BMD_STRUTIL_H

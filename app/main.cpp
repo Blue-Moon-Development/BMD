@@ -18,7 +18,6 @@
  * Date File Created: 7/30/2020 at 11:02 PM
  * Author: Matt
  */
-
 #include <bmd/strutil.h>
 #include <bmd/errors.h>
 #include <bmd/types.h>
@@ -151,23 +150,23 @@ void test_files()
 {
 	file_t file;
 	int error = loadFile("./test/fname.txt", &file);
-	if(!error)
+	if (!error)
 		printf("File path: %s\nFile name: %s\nFile ext: %s\nFile size: %zu\n",
-			file.path, file.name,file.ext, file.size);
+			   file.path, file.name, file.ext, file.size);
 	else printf("Error: %i\n", error);
 
 	error = readFileContents(&file);
-	if(!error)
+	if (!error)
 		printf("File contents:\n%s\n", file.contents);
 	else printf("error: %i\n", error);
 
 	fs_time time;
 	error = getCreationTime(file.path, &time);
-	if(!error)
+	if (!error)
 		printf("File was created at: %s\n", time.time_str);
 
 	error = getLastModifiedTime(file.path, &time);
-	if(!error)
+	if (!error)
 		printf("File was last modified at: %s\n", time.time_str);
 
 
@@ -177,31 +176,47 @@ void test_files()
 
 	char* fileContents;
 	error = readFile("./test/fname.txt", &fileContents);
-	if(!error)
+	if (!error)
 		printf("Contents of fname.txt:\n%s\n", fileContents);
 
-	if(fileContents) free(fileContents);
-	if(file.contents) free(file.contents);
+	if (fileContents) free(fileContents);
+	if (file.contents) free(file.contents);
 
 	file_t load_read;
 	error = loadFileAndReadContents("./CmakeFiles/CMakeDirectoryInformation.cmake", &load_read);
-	if(!error)
+	if (!error)
 		printf("File contents:\n%s\n", load_read.contents);
 
 	fs_time loadreadTime;
 	error = getCreationTime(&load_read, &loadreadTime);
-	if(!error)
+	if (!error)
 		printf("File created: %s\n", loadreadTime.time_str);
 
 	int check = compareTimes(&loadreadTime, &time);
-	if(check == -1)
+	if (check == -1)
 		printf("%s comes before %s\n", loadreadTime.time_str, time.time_str);
-	else if(check == 1)
+	else if (check == 1)
 		printf("%s comes after %s\n", loadreadTime.time_str, time.time_str);
-	else if(check == 0)
+	else if (check == 0)
 		printf("%s is same time as %s\n", loadreadTime.time_str, time.time_str);
 
-	if(load_read.contents) free(load_read.contents);
+	file_t writeToHere;
+	//error = writeFile("./test.log", "This is just to start things", "wt");
+	//if(!error)
+	loadFileAndReadContents("./test.log", &writeToHere);
+	char* fileContentsW;
+	readFile("./test.log", &fileContentsW);
+	printf("File contents of variable: %s\nAnd when reading file: %s\n", writeToHere.contents, fileContentsW);
+	error = writeFile(&writeToHere, "\nThis is some more testing", "at");
+	if (!error)
+	{
+		printf("File contents of variable: %s\nAnd when reading file: %s\n", writeToHere.contents,
+			   fileContentsW);
+		if (fileContentsW) free(fileContentsW);
+	}
+
+	if (writeToHere.contents) free(writeToHere.contents);
+	if (load_read.contents) free(load_read.contents);
 	//file_t file;
 	//dir_t dir;
 	//openDir(&dir, "./test");
@@ -212,17 +227,41 @@ void test_files()
 }
 
 
+#include <bmd/timer.h>
+#include <bmd/logger.h>
+
+
+
+
 int main(int argc, char** argv)
 {
 
-
+	//int* p = nullptr;
+	//formatStr_s("format", 32, 0.27453f, 43545L, 2.01, 'c', (int)'c', p);
+	//char buf[100];
+	//getCurrentTime(buf);
+	//printf("Time is %s\n", buf);
+	initLog("./info.log", LOG_MODE_ARCHIVE, 7);
+	logInfo("This is just a test");
+	logInfo("This is just a test 1");
+	logTrace("This is just a test 2");
+	logTrace("This is just a test 3");
+	logError("This is just a test 4");
+	logDebug("This is just a test 5");
+	logInfo("This is just a test 6");
+	logWarn("This is just a test 7");
+	logInfo("This is just a test 8");
+	logDebug("This is just a test 9");
+	logError("Another error!");
+	logInfo("This is just a test 10");
+	logInfo("This is just a test 11");
+	logError(getErrorString(-16));
 	//test_substr();
 	//test_index_finder();
 	//test_concat();
 	//test_copy();
 	//test_arr_length();
-	test_files();
-
+	//test_files();
 	//int t[] = {
 	//		1, 2, 3,
 	//		4, 5, 6
@@ -230,3 +269,4 @@ int main(int argc, char** argv)
 	//test_arr_as_param(t);
 
 }
+

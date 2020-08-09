@@ -14,48 +14,20 @@
  * 
  * Contact: team@bluemoondev.org
  * 
- * File Name: common.h
- * Date File Created: 7/30/2020 at 4:45 PM
+ * File Name: timer.cpp
+ * Date File Created: 8/7/2020 at 2:01 PM
  * Author: Matt
  */
 
-#ifndef BMD_COMMON_H
-#define BMD_COMMON_H
+#include "bmd/timer.h"
+#include <time.h>
 
+void getCurrentTime(char (&timeStr)[100], const char* format)
+{
+	time_t rawTime;
+	struct tm* timeInfo;
+	time(&rawTime);
+	timeInfo = localtime(&rawTime);
+	strftime(timeStr, 100, format, timeInfo);
+}
 
-
-#ifndef DEBUGGING
-	#define DEBUGGING 1
-#endif // DEBUGGING
-
-
-#ifndef VERBOSE
-	#define VERBOSE 0
-#endif // VERBOSE
-
-// If BMD_DEBUGGING is 1
-#if DEBUGGING || VERBOSE
-
-#include <stdio.h>
-#include <assert.h>
-#include <errno.h>
-
-#define BMD_ASSERT assert
-#else
-// If DEBUGGING is disabled (not 1) then don't use assert
-#define BMD_ASSERT(...)
-#endif // DEBUGGING || VERBOSE
-
-
-static const int BMD_DEBUGGING = DEBUGGING;
-static const int BMD_VERBOSE = VERBOSE;
-
-#if DEBUGGING
-	#define println(fmt_, ...) printf(fmt_"\n", ##__VA_ARGS__)
-	#define print(fmt_, ...) printf(fmt_, ##__VA_ARGS__)
-#else
-	#define println(...)
-	#define print(...)
-#endif
-
-#endif //BMD_COMMON_H

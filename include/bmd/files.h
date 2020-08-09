@@ -162,6 +162,9 @@ extern int loadFileAndReadContents(const char* filePath, file_t* file);
 */
 extern int readFileContents(file_t* file);
 
+extern int writeFile(const char* file, const char* data, const char* mode);
+extern int writeFile(file_t* file, const char* data, const char* mode);
+
 /**
 * Reads the contents of a file
 * @param file The path to the file to read
@@ -188,11 +191,38 @@ extern int openDir(dir_t* dir, const char* path);
 extern int closeDir(dir_t* dir);
 
 /**
+* Creates the given directory if it does not exist
+* @param path The directory to create
+* @return zero if no error, non-zero if there was an error
+*/
+extern int createDir(const char* path);
+
+/**
 * From an opened fs_dir, this grabs the next file
 * @param dir The opened fs_dir (see openDir(dir_t* dir) )
 * @return zero if there was no error, non-zero if there was an error
 */
 extern int nextFile(dir_t* dir);
+
+/**
+* Performs the given callback function on every file found in the given directory
+*
+* @param dirPath The directory to traverse
+* @param callback The function to perform on the files
+* @param userData
+* @return zero if there was no error, non-zero if there was an error
+*/
+extern int traverse(const char* dirPath, fs_callback callback, void* userData);
+
+/**
+* Performs the given callback function on every file found in the given directory and it's sub directories
+*
+* @param dirPath The directory to traverse
+* @param callback The function to perform on the files
+* @param userData
+* @return zero if there was no error, non-zero if there was an error
+*/
+extern int traverse_r(const char* dirPath, fs_callback callback, void* userData);
 
 /**
 * Retrieves the time when the file at the given path was created
@@ -256,28 +286,55 @@ extern int compareTimes(fs_time* a, fs_time* b);
 
 #include <Windows.h>
 
+/**
+* Represents a file in the BMD file system api
+*/
 struct FSFile
 {
+	/** A string containing the full path of the file (not necessarily absolute) */
 	char path[MAX_PATH_LENGTH];
+
+	/** A string containing the name of the file. The path is stripped away */
 	char name[MAX_FILENAME_LENGTH];
+
+	/** A string containing the extension of the file */
 	char ext[MAX_EXT_LENGTH];
+
+	/** 1 if the file is a directory, 0 otherwise */
 	int isDir;
+
+	/** 1 if the file is a non-directory normal file, 0 otherwise */
 	int isFile;
+
+	/** The size of the file, includes the null terminating character */
 	size_t size;
+
+	/** The contents of the file. Null until the file is read */
 	char* contents;
 };
 
+/**
+* Represents a directory in the bmd file system api
+*/
 struct FSDir
 {
+	/** A string containing the full path of the file (not necessarily absolute) */
 	char path[MAX_PATH_LENGTH];
+
+	/** 1 if the directory has another file it has not yet encountered, 0 otherwise */
 	int hasNext;
+
+	// Windows information
 	HANDLE handle;
 	WIN32_FIND_DATAA fdata;
 };
 
 struct FSTime
 {
+	/** The Windows FILETIME structure for a file */
 	FILETIME time;
+
+	/** A string containing formatted output of the file time */
 	char time_str[50];
 };
 

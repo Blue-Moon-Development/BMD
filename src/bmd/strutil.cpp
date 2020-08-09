@@ -28,27 +28,27 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include <setjmp.h>
-#include <signal.h>
-
-jmp_buf jump;
-
-void segv(int sig)
-{
-	longjmp(jump, 1);
-}
-
-int memcheck(void* x)
-{
-	volatile char c;
-	int illegal = 0;
-	signal(SIGSEGV, segv);
-	if(!setjmp(jump))
-		c = *(char*) (x);
-	else illegal = 1;
-	signal(SIGSEGV, SIG_DFL);
-	return illegal;
-}
+//#include <setjmp.h>
+//#include <signal.h>
+//
+//jmp_buf jump;
+//
+//void segv(int sig)
+//{
+//	longjmp(jump, 1);
+//}
+//
+//int memcheck(void* x)
+//{
+//	volatile char c;
+//	int illegal = 0;
+//	signal(SIGSEGV, segv);
+//	if(!setjmp(jump))
+//		c = *(char*) (x);
+//	else illegal = 1;
+//	signal(SIGSEGV, SIG_DFL);
+//	return illegal;
+//}
 
 int copyStr_s(char* dest, const char* src, int max)
 {
@@ -59,7 +59,7 @@ int copyStr_s(char* dest, const char* src, int max)
 	{
 		if (size >= max)
 		{
-			if (DEBUGGING)
+			if (BMD_DEBUGGING)
 				fprintf(stderr, "Error: String \"%s\" exceeds max length allowed (%i)\n",
 						cpySrc, max);
 					BMD_ASSERT(0);
@@ -96,7 +96,7 @@ int copyStrDynamic_s(char*& dest, const char* src, int max)
 {
 	int bufferSize = sizeof(char) + strlen(src);
 	char* buffer = (char*) malloc(bufferSize);
-	if(!buffer) return BMD_ERROR_INVALID_MEMORY_ALLOCATION;
+	if (!buffer) return BMD_ERROR_INVALID_MEMORY_ALLOCATION;
 	int size = copyStr_s(buffer, src, max);
 	dest = buffer;
 	return size;
@@ -106,7 +106,7 @@ int copyStrDynamic(char*& dest, const char* src)
 {
 	int bufferSize = sizeof(char) + strlen(src);
 	char* buffer = (char*) malloc(bufferSize);
-	if(!buffer) return BMD_ERROR_INVALID_MEMORY_ALLOCATION;
+	if (!buffer) return BMD_ERROR_INVALID_MEMORY_ALLOCATION;
 	int size = copyStr(buffer, src);
 	dest = buffer;
 	return size;
@@ -114,8 +114,8 @@ int copyStrDynamic(char*& dest, const char* src)
 
 int concatStr(char* orig, const char* add)
 {
-	if(!orig) return BMD_ERROR_NULL_STRING;
-	if(!add) return BMD_ERROR_NULL_STRING;
+	if (!orig) return BMD_ERROR_NULL_STRING;
+	if (!add) return BMD_ERROR_NULL_STRING;
 	while (*orig)
 		orig++;
 
@@ -132,14 +132,14 @@ int concatStr(char* orig, const char* add)
 
 int concatStr(char* orig, const char* add, int start, int stop)
 {
-	if(!orig) return BMD_ERROR_NULL_STRING;
-	if(!add) return BMD_ERROR_NULL_STRING;
-	while(*orig)
+	if (!orig) return BMD_ERROR_NULL_STRING;
+	if (!add) return BMD_ERROR_NULL_STRING;
+	while (*orig)
 		orig++;
 	int i = 0;
-	while(*add)
+	while (*add)
 	{
-		if(i <= start)
+		if (i <= start)
 		{
 			add++;
 			i++;
@@ -149,7 +149,7 @@ int concatStr(char* orig, const char* add, int start, int stop)
 		add++;
 		orig++;
 		i++;
-		if(i > stop) break;
+		if (i > stop) break;
 	}
 
 	*orig = NULL_TERM;
@@ -163,48 +163,48 @@ int concatStr(char* orig, const char* add, int stop)
 
 int concatStrDynamic(char** orig, const char* add)
 {
-	if(!orig) return BMD_ERROR_NULL_STRING;
-	if(!add) return BMD_ERROR_NULL_STRING;
+	if (!orig) return BMD_ERROR_NULL_STRING;
+	if (!add) return BMD_ERROR_NULL_STRING;
 	int bufferSize = NULL_TERM_SIZE + strlen(*orig) + strlen(add);
 	char* buffer = (char*) malloc(bufferSize);
-	if(!buffer) return BMD_ERROR_INVALID_MEMORY_ALLOCATION;
+	if (!buffer) return BMD_ERROR_INVALID_MEMORY_ALLOCATION;
 	int error = BMD_NO_ERROR;
-	if(strlen(*orig) > 0)
+	if (strlen(*orig) > 0)
 		copyStr(buffer, *orig);
 	error = concatStr(buffer, add);
-	if(!error) *orig = buffer;
+	if (!error) *orig = buffer;
 	return error;
 }
 
 
 int concatStrDynamic(char** orig, const char* add, int start, int stop)
 {
-	if(!orig) return BMD_ERROR_NULL_STRING;
-	if(!add) return BMD_ERROR_NULL_STRING;
+	if (!orig) return BMD_ERROR_NULL_STRING;
+	if (!add) return BMD_ERROR_NULL_STRING;
 	int bufferSize = NULL_TERM_SIZE + strlen(*orig) + strlen(add);
 	char* buffer = (char*) malloc(bufferSize);
-	if(!buffer) return BMD_ERROR_INVALID_MEMORY_ALLOCATION;
+	if (!buffer) return BMD_ERROR_INVALID_MEMORY_ALLOCATION;
 	int error = BMD_NO_ERROR;
-	if(strlen(*orig) > 0)
+	if (strlen(*orig) > 0)
 		copyStr(buffer, *orig);
 	error = concatStr(buffer, add, start, stop);
-	if(!error) *orig = buffer;
+	if (!error) *orig = buffer;
 	return error;
 }
 
 
 int concatStrDynamic(char** orig, const char* add, int stop)
 {
-	if(!orig) return BMD_ERROR_NULL_STRING;
-	if(!add) return BMD_ERROR_NULL_STRING;
+	if (!orig) return BMD_ERROR_NULL_STRING;
+	if (!add) return BMD_ERROR_NULL_STRING;
 	int bufferSize = NULL_TERM_SIZE + strlen(*orig) + strlen(add);
 	char* buffer = (char*) malloc(bufferSize);
-	if(!buffer) return BMD_ERROR_INVALID_MEMORY_ALLOCATION;
+	if (!buffer) return BMD_ERROR_INVALID_MEMORY_ALLOCATION;
 	int error = BMD_NO_ERROR;
-	if(strlen(*orig) > 0)
+	if (strlen(*orig) > 0)
 		copyStr(buffer, *orig);
 	error = concatStr(buffer, add, stop);
-	if(!error) *orig = buffer;
+	if (!error) *orig = buffer;
 	return error;
 }
 
@@ -212,14 +212,14 @@ char* substr(const char* str, int start, int stop)
 {
 	if (!str)
 	{
-		if (DEBUGGING)
+		if (BMD_DEBUGGING)
 			fprintf(stderr, "Error: Tried to get substring from a null string\n");
 		return NULL;
 	}
 	int length = strlen(str);
 	if (start < 0 || stop > length || start >= length || stop <= 0)
 	{
-		if (DEBUGGING)
+		if (BMD_DEBUGGING)
 			fprintf(stderr,
 					"Error: Index out of bounds when trying to get a substring\n"
 					"Ensure start >= 0 and stop < str length (%i). Given start: %i, stop: %i\n",
@@ -229,7 +229,7 @@ char* substr(const char* str, int start, int stop)
 
 	char* ptr = (char*) malloc(stop - start + sizeof(char)); // + char size to account for \0
 	int c;
-	for(c = 0; c < (stop - start); c++)
+	for (c = 0; c < (stop - start); c++)
 	{
 		*(ptr + c) = *(str + start);
 		str++;
@@ -240,9 +240,9 @@ char* substr(const char* str, int start, int stop)
 
 char* substr(const char* str, int start)
 {
-	if(!str)
+	if (!str)
 	{
-		if(DEBUGGING)
+		if (BMD_DEBUGGING)
 			fprintf(stderr, "Error: Attempted to capture a substring from a null string\n");
 		return NULL;
 	}
@@ -253,34 +253,38 @@ char* substr(const char* str, int start)
 int indexOf(const char* str, char c)
 {
 	const char* ptr = strchr(str, c);
-	int ret = (int)(ptr - str);
-	if(ret == -1) return BMD_ERROR_CHAR_NOT_IN_STRING;
+	int ret = (int) (ptr - str);
+	if (ret == -1) return BMD_ERROR_CHAR_NOT_IN_STRING;
 	return ret;
 }
 
 int lastIndexOf(const char* str, char c)
 {
 	const char* ptr = strrchr(str, c);
-	int ret = (int)(ptr - str);
-	if(ret == -1) return BMD_ERROR_CHAR_NOT_IN_STRING;
+	int ret = (int) (ptr - str);
+	if (ret == -1) return BMD_ERROR_CHAR_NOT_IN_STRING;
 	return ret;
 }
 
 
 int indicesOf(const char* str, char c, int** indices)
 {
-	if(!str) return BMD_ERROR_NULL_STRING;
+	if (!str) return BMD_ERROR_NULL_STRING;
 	int n = 0;
-	int* ret = (int*)malloc(strlen(str) * sizeof(int));
-	if(!ret) return BMD_ERROR_INVALID_MEMORY_ALLOCATION;
-	for(int i = 0; i < strlen(str); i++)
+	int* ret = (int*) malloc(strlen(str) * sizeof(int));
+	if (!ret) return BMD_ERROR_INVALID_MEMORY_ALLOCATION;
+	for (int i = 0; i < strlen(str); i++)
 	{
-		if(str[i] == c)
+		if (str[ i ] == c)
 		{
-			ret[n] = i;
+			ret[ n ] = i;
 			n++;
 		}
 	}
 	*indices = ret;
 	return n;
 }
+
+
+
+//#endif

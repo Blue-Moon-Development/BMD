@@ -11,8 +11,8 @@ set(BMD_LIB "bmd")
 
 #SET(BUILD_SHARED_LIBS ON)
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
-INCLUDE(coloredmessage)
-INCLUDE(buildtype)
+include(coloredmessage)
+include(buildtype)
 
 
 message(STATUS "Beginning build...")
@@ -46,6 +46,7 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
 endif()
 
 
+include(find_stackwalker)
 
 add_subdirectory(src)
 add_subdirectory(app)

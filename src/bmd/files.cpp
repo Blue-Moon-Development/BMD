@@ -23,6 +23,7 @@
 #include "bmd/errors.h"
 #include "bmd/common.h"
 #include "bmd/strutil.h"
+#include "bmd/logger.h"
 
 
 const char* getExt(file_t* file)
@@ -96,15 +97,23 @@ int loadFile(const char* filePath, file_t* file)
 int readFile(const char* file, char** data)
 {
 	if (!doesFileExist(file)) return NULL;
-	FILE* f = fopen(file, "rt");
+	FILE* f;
+	int error = fopen_s(&f, file, "rt");
+	checkErrorMsg(error, "Could not open file %s\n", file);
 	fseek(f, 0, SEEK_END);
 	ulong len = ftell(f);
 	char* buffer = (char*) malloc(len + 1);
-	if (!buffer) return BMD_ERROR_INVALID_MEMORY_ALLOCATION;
+	if (!buffer)
+	{
+		checkErrorMsg(BMD_ERROR_INVALID_MEMORY_ALLOCATION,
+					  "Failed to allocate memory while reading file %s\n", file);
+	}
 	memset(buffer, 0, len + 1);
 	fseek(f, 0, SEEK_SET);
 	fread(buffer, 1, len, f);
 	*data = buffer;
+	error = fclose(f);
+	checkErrorMsg(error, "Failed to close file %s\n", file);
 	return BMD_NO_ERROR;
 }
 
@@ -162,8 +171,92 @@ int readFileContents(file_t* file)
 	char* data = (char*) malloc(file->size);
 	memset(data, 0, file->size);
 	fread(data, 1, file->size - 1, f);
+	fclose(f);
 	file->contents = data;
 	if (!file->contents) return BMD_ERROR_READ_FILE;
+	return BMD_NO_ERROR;
+}
+
+int writeFile(const char* file, const char* data, const char* mode)
+{
+	FILE* f;
+	fopen_s(&f, file, mode);
+	fwrite(data, 1, strlen(data), f);
+	fclose(f);
+	return BMD_NO_ERROR;
+}
+
+int writeFile(file_t* file, const char* data, const char* mode)
+{
+	if (!file) return BMD_ERROR_NULL_FILE;
+	if (!file->isFile) return BMD_ERROR_NOT_A_FILE;
+	FILE* f;
+	fopen_s(&f, file->path, mode);
+	fwrite(data, 1, strlen(data), f);
+	fseek(f, 0, SEEK_END);
+	ulong len = ftell(f);
+	fclose(f);
+	file->size = len + 1;
+	return BMD_NO_ERROR;
+}
+
+int traverse(const char* dirPath, fs_callback callback, void* userData)
+{
+	dir_t dir;
+	int error = openDir(&dir, dirPath);
+	checkError(error)
+
+	while (dir.hasNext)
+	{
+		file_t file;
+		error = loadFile(&dir, &file);
+		checkError(error)
+
+		if (file.isFile)
+			callback(&file, userData);
+		error = nextFile(&dir);
+		checkError(error)
+	}
+	error = closeDir(&dir);
+	checkError(error)
+	return BMD_NO_ERROR;
+}
+
+int traverse_r(const char* dirPath, fs_callback callback, void* userData)
+{
+	dir_t dir;
+	int error = openDir(&dir, dirPath);
+	checkError(error)
+
+	while (dir.hasNext)
+	{
+		file_t file;
+		error = loadFile(&dir, &file);
+		checkError(error)
+		if (file.isDir && file.name[ 0 ] != '.')
+		{
+			char path[MAX_PATH_LENGTH];
+			int size = copyStr_s(path, dirPath, MAX_PATH_LENGTH);
+			if (size < 0)
+			{
+				logWarn("Failed to copy directory path string while traversing");
+				return size; // will be BMD_ERROR_EXCEEDS_LENGTH
+			}
+			error = concatStr(path, "/");
+			checkError(error)
+			error = concatStr(path, file.name);
+			checkError(error)
+			error = traverse_r(path, callback, userData);
+			checkError(error)
+		}
+
+		if (file.isFile)
+			callback(&file, userData);
+		error = nextFile(&dir);
+		checkError(error)
+	}
+	error = closeDir(&dir);
+	checkError(error)
 	return BMD_NO_ERROR;
 }
 
@@ -243,7 +336,7 @@ int loadFileAndReadContents(dir_t* dir, file_t* file)
 	file->isDir = (dir->fdata.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
 	file->isFile = (dir->fdata.dwFileAttributes & FILE_ATTRIBUTE_NORMAL) != 0 ||
 				   !(dir->fdata.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY);
-	if(file->isFile && !file->isDir)
+	if (file->isFile && !file->isDir)
 		error = readFileContents(file);
 
 	return error;
@@ -263,11 +356,11 @@ int openDir(dir_t* dir, const char* path)
 
 	if (dir->handle == INVALID_HANDLE_VALUE)
 	{
-		if (DEBUGGING)
+		if (BMD_DEBUGGING)
 			fprintf(stderr, "Error: Could not open directory [%s] - %s", path, strerror(errno));
 		// To be safe, lets mark the directory as closed
 		closeDir(dir);
-				BMD_ASSERT(0);
+		//BMD_ASSERT(0);
 		return BMD_ERROR_OPEN_DIR;
 	}
 
@@ -283,6 +376,18 @@ int closeDir(dir_t* dir)
 	if (dir->handle != INVALID_HANDLE_VALUE)
 		FindClose(dir->handle);
 	else return BMD_ERROR_CLOSE_DIR;
+	return BMD_NO_ERROR;
+}
+
+int createDir(const char* path)
+{
+	int success = CreateDirectoryA(path, 0);
+	if (success) return BMD_NO_ERROR;
+	DWORD err = GetLastError();
+	if (err == ERROR_PATH_NOT_FOUND)
+		return BMD_ERROR_PATH_NOT_FOUND;
+	else if (err != ERROR_ALREADY_EXISTS && !success)
+		return BMD_ERROR_CREATE_DIR;
 	return BMD_NO_ERROR;
 }
 
@@ -390,6 +495,11 @@ int openDir(dir_t* dir, const char* path)
 }
 
 int closeDir(dir_t* dir)
+{
+	return BMD_ERROR_NOT_YET_IMPLEMENTED;
+}
+
+int createDir(const char* path)
 {
 	return BMD_ERROR_NOT_YET_IMPLEMENTED;
 }

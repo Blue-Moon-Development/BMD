@@ -13,8 +13,11 @@ file(GLOB_RECURSE SRC_LIST CONFIGURE_DEPENDS
 	)
 
 
-
-set(BMD_INCLUDES "../include")
+if(MSVC)
+	set(BMD_INCLUDES "../include" ${STACKWALKER_INCLUDE_DIRS})
+else()
+	set(BMD_INCLUDES "../include")
+endif()
 
 message(Blue "Adding static library ${BMD_LIB}")
 
@@ -28,6 +31,9 @@ set_property(TARGET ${BMD_LIB} PROPERTY SRCS ${SRC_LIST})
 
 message(STATUS "Setting include directories for ${BMD_LIB}, dirs: ${BMD_INCLUDES}")
 target_include_directories(${BMD_LIB} PUBLIC ${BMD_INCLUDES})
+if(MSVC)
+	target_link_libraries(${BMD_LIB} PUBLIC ${STACKWALKER_LIBRARIES})
+endif()
 target_compile_features(${BMD_LIB} PUBLIC cxx_std_11)
 
 message(Blue "Creating folders for project ${BMD_STATIC}")
