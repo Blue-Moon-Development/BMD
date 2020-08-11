@@ -19,9 +19,10 @@
  * Author: Matt
  */
 
-#include <bmd/logger.h>
+#define BMD_HEADERS_ONLY
+#define BMD_DEBUGGING 1
 #define BMD_PROFILE 1
-#include <bmd/profiler.h>
+#include <bmd/core.h>
 
 int main(int argc, char** argv)
 {

@@ -28,7 +28,12 @@
 extern "C" {
 #endif // __cplusplus
 
-void getCurrentTime(char (timeStr)[100], const char* format);
+#ifdef __cplusplus
+	void getCurrentTime(char (&timeStr)[100], const char* format);
+#else
+void getCurrentTime(char timeStr[100], const char* format);
+#endif
+
 
 #ifdef __cplusplus
 };
@@ -39,7 +44,11 @@ void getCurrentTime(char (timeStr)[100], const char* format);
 		#define BMD_TIMER_IMPL
 #include <time.h>
 
-void getCurrentTime(char (timeStr)[100], const char* format)
+#ifdef __cplusplus
+void getCurrentTime(char (&timeStr)[100], const char* format)
+	#else
+void getCurrentTime(char timeStr[100], const char* format)
+	#endif
 {
 	time_t rawTime;
 	struct tm* timeInfo;

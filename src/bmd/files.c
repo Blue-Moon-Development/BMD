@@ -19,10 +19,10 @@
  * Author: Matt
  */
 
+#include <stdio.h>
 #include "bmd/files.h"
 #include "bmd/errors.h"
 #include "bmd/strutil.h"
-#include "bmd/logger.h"
 
 
 const char* getExt(file_t* file)
@@ -107,7 +107,7 @@ int readFile(const char* file, char** data)
 	checkErrorMsg(error, "Could not open file %s\n", file);
 	fseek(f, 0, SEEK_END);
 	ulong len = ftell(f);
-	char* buffer = (char*) malloc(len + 1);
+	char* buffer = VOID_TO_CHAR malloc(len + 1);
 	if (!buffer)
 	{
 		checkErrorMsg(BMD_ERROR_INVALID_MEMORY_ALLOCATION,
@@ -173,7 +173,7 @@ int readFileContents(file_t* file)
 	fopen_s(&f, file->path, "rt");
 	//fseek(f, 0, SEEK_END);
 	//ulong len = ftell(f);
-	char* data = (char*) malloc(file->size);
+	char* data = VOID_TO_CHAR malloc(file->size);
 	memset(data, 0, file->size);
 	fread(data, 1, file->size - 1, f);
 	fclose(f);
@@ -209,21 +209,21 @@ int traverse(const char* dirPath, fs_callback callback, void* userData)
 {
 	dir_t dir;
 	int error = openDir(&dir, dirPath);
-	checkError(error)
+	checkError(error);
 
 	while (dir.hasNext)
 	{
 		file_t file;
 		error = loadFileFromDir(&dir, &file);
-		checkError(error)
+		checkError(error);
 
 		if (file.isFile)
 			callback(&file, userData);
 		error = nextFile(&dir);
-		checkError(error)
+		checkError(error);
 	}
 	error = closeDir(&dir);
-	checkError(error)
+	checkError(error);
 	return BMD_NO_ERROR;
 }
 
@@ -231,37 +231,37 @@ int traverse_r(const char* dirPath, fs_callback callback, void* userData)
 {
 	dir_t dir;
 	int error = openDir(&dir, dirPath);
-	checkError(error)
+	checkError(error);
 
 	while (dir.hasNext)
 	{
 		file_t file;
 		error = loadFileFromDir(&dir, &file);
-		checkError(error)
+		checkError(error);
 		if (file.isDir && file.name[ 0 ] != '.')
 		{
 			char path[MAX_PATH_LENGTH];
 			int size = copyStr_s(path, dirPath, MAX_PATH_LENGTH);
 			if (size < 0)
 			{
-				logWarn("Failed to copy directory path string while traversing");
+				dbgprinterr("Error: Failed to copy directory path string while traversing");
 				return size; // will be BMD_ERROR_EXCEEDS_LENGTH
 			}
 			error = concatStr(path, "/");
-			checkError(error)
+			checkError(error);
 			error = concatStr(path, file.name);
-			checkError(error)
+			checkError(error);
 			error = traverse_r(path, callback, userData);
-			checkError(error)
+			checkError(error);
 		}
 
 		if (file.isFile)
 			callback(&file, userData);
 		error = nextFile(&dir);
-		checkError(error)
+		checkError(error);
 	}
 	error = closeDir(&dir);
-	checkError(error)
+	checkError(error);
 	return BMD_NO_ERROR;
 }
 
@@ -361,8 +361,7 @@ int openDir(dir_t* dir, const char* path)
 
 	if (dir->handle == INVALID_HANDLE_VALUE)
 	{
-		if (BMD_DEBUGGING)
-			fprintf(stderr, "Error: Could not open directory [%s] - %s", path, strerror(errno));
+		dbgprinterr("Error: Could not open directory [%s] - %s", path, strerror(errno));
 		// To be safe, lets mark the directory as closed
 		closeDir(dir);
 		//BMD_ASSERT(0);

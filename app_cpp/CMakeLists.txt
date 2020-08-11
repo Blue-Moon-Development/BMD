@@ -13,11 +13,12 @@ file(GLOB_RECURSE APP_HEADER_LIST CONFIGURE_DEPENDS
 	)
 
 add_executable(app_cpp ${APP_SRC_LIST} ${APP_HEADER_LIST})
+target_include_directories(app_cpp PUBLIC "../include")
 target_compile_features(app_cpp PRIVATE cxx_std_11)
 #set_property(TARGET app PROPERTY C_STANDARD 11)
 
 message(Magenta "Linking BMD library to the test app")
-target_link_libraries(app_cpp PRIVATE ${BMD_LIB})
+#target_link_libraries(app_cpp PRIVATE ${BMD_LIB})
 
 source_group (
 TREE    "${BMD_SOURCE_DIR}/app_cpp"

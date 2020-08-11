@@ -32,7 +32,7 @@
 * With the exception of NULL_TERMINATING_CHAR as \0 marks the end of a char array regardless of OS/compiler
 */
 
-#include "bmd/types.h"
+#include "types.h"
 #include <math.h>
 
 /**

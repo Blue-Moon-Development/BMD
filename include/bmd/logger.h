@@ -29,6 +29,10 @@
 
 #include "files.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif // __cplusplus
+
 #define LEVEL_TRACE "trace"
 #define LEVEL_DEBUG "debug"
 #define LEVEL_INFO "info"
@@ -40,13 +44,10 @@
 #define LOG_MODE_ARCHIVE 3
 
 
-// TODO: Messages being print to console should definitely depend if 'debug' is enabled, but what about outputting to the files?
+// TODO: Messages being dbgprint to console should definitely depend if 'debug' is enabled, but what about outputting to the files?
 // Certainly could hinder performance, but isn't the point of log files so users can send to devs for error reports?
 // Maybe have general output logging only in debug, but warn/error goes to file regardless?
 
-#ifdef __cplusplus
-extern "C" {
-#endif // __cplusplus
 
 void initLog(const char* logPath, int mode, int maxArchives);
 void logMessage(const char* level, const char* msg, const char* file, const char* func, int line);
@@ -58,10 +59,6 @@ void logInfoMessage(const char* msg, const char* file, const char* func, int lin
 void logWarnMessage(const char* msg, const char* file, const char* func, int line);
 void logErrorMessage(const char* msg, const char* file, const char* func, int line);
 
-#ifdef __cplusplus
-};
-#endif // __cplusplus
-
 
 #define logTrace(msg) logTraceMessage(msg, __FILE__, __FUNCTION__, __LINE__)
 #define logDebug(msg) logDebugMessage(msg, __FILE__, __FUNCTION__, __LINE__)
@@ -69,15 +66,20 @@ void logErrorMessage(const char* msg, const char* file, const char* func, int li
 #define logWarn(msg) logWarnMessage(msg, __FILE__, __FUNCTION__, __LINE__)
 #define logError(msg) logErrorMessage(msg, __FILE__, __FUNCTION__, __LINE__)
 
+#ifdef __cplusplus
+};
+#endif // __cplusplus
+
 // TODO: Seems fairly slow with the profiler. Need to compare to spdlog. If spdlog is significantly faster,
 // then why bother having this logger in bmd if i myself wouldn't use it?
 
 #ifdef BMD_HEADERS_ONLY
 	#ifndef BMD_LOGGER_IMPL
 		#define BMD_LOGGER_IMPL
-		#include "bmd/common.h"
-#include "bmd/strutil.h"
-#include "bmd/timer.h"
+
+#include "common.h"
+#include "strutil.h"
+#include "timer.h"
 
 file_t g_logFile;
 int g_initialized;
@@ -87,18 +89,18 @@ int count = 0;
 void findOldestFile(file_t* file, void* data)
 {
 	fs_time time;
-	getLastModifiedTime(file, &time);
+	getLastModifiedTimeOfFile(file, &time);
 	if (count > 0)
 	{
 		int a = compareTimes(&time, &lastTime);
 		if (a < 0)
 		{
-			getLastModifiedTime(file, &lastTime);
+			getLastModifiedTimeOfFile(file, &lastTime);
 			copyStr((*(file_t*) data).path, file->path);
 		}
 	} else
 	{
-		getLastModifiedTime(file, &lastTime);
+		getLastModifiedTimeOfFile(file, &lastTime);
 		copyStr((*(file_t*) data).path, file->path);
 	}
 	count++;
@@ -110,7 +112,7 @@ void initLog(const char* logPath, int mode, int maxArchives)
 	if (!doesFileExist(logPath))
 	{
 		char buf[100];
-		getCurrentTime(buf);
+		getCurrentTime(buf, DEFAULT_TIME_FORMAT);
 		char initBuf[500];
 		//== == == ==
 		sprintf(initBuf,
@@ -151,7 +153,7 @@ void initLog(const char* logPath, int mode, int maxArchives)
 
 
 			char buf[100];
-			getCurrentTime(buf);
+			getCurrentTime(buf, DEFAULT_TIME_FORMAT);
 			char initBuf[500];
 			//== == == ==
 			sprintf(initBuf,
@@ -162,13 +164,13 @@ void initLog(const char* logPath, int mode, int maxArchives)
 		} else if (mode == LOG_MODE_APPEND)
 		{
 			char buf[100];
-			getCurrentTime(buf);
+			getCurrentTime(buf, DEFAULT_TIME_FORMAT);
 			char initBuf[500];
 			sprintf(initBuf,
 					"\n\n\n============================== Current log started on %s ==============================\n\n",
 					buf);
 			loadFile(logPath, &g_logFile);
-			writeFile(&g_logFile, initBuf, "at");
+			writeToFile(&g_logFile, initBuf, "at");
 		}
 	}
 	g_initialized = 1;
@@ -179,11 +181,17 @@ void logMessage(const char* level, const char* msg, const char* file, const char
 	if (g_initialized)
 	{
 		char buf[100];
-		getCurrentTime(buf);
+		getCurrentTime(buf, DEFAULT_TIME_FORMAT);
 		char data[2048] = { };
 		sprintf(data, "\n[%s] [%s] [%s:%d] [%s] %s", buf, level, file, line, func, msg);
-		writeFile(&g_logFile, data, "at");
-		print("%s", data);
+		writeToFile(&g_logFile, data, "at");
+#if BMD_DEBUGGING
+		if(strcmp(level, LEVEL_WARN) == 0 || strcmp(level, LEVEL_ERROR) == 0)
+			dbgprinterr("%s", data);
+		else
+			dbgprint("%s", data);
+#endif
+
 	}
 }
 
@@ -193,7 +201,7 @@ void logMessageNoLevel(const char* msg, const char* file, const char* func, int 
 	{
 		char data[2048] = { };
 		sprintf(data, "\nStack Trace at [%s:%d] [%s]\n%s", file, line, func, msg);
-		writeFile(&g_logFile, data, "at");
+		writeToFile(&g_logFile, data, "at");
 	}
 }
 
@@ -221,6 +229,7 @@ void logErrorMessage(const char* msg, const char* file, const char* func, int li
 {
 	logMessage(LEVEL_ERROR, msg, file, func, line);
 }
+
 	#endif
 #endif
 

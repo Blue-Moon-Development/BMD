@@ -25,14 +25,18 @@
 #include "common.h"
 #include "types.h"
 
+#if BMD_DEBUGGING
 #define checkError(error) if(error) return error;
-#define checkErrorMsg(error, format, ...) if(error) {    \
-if(BMD_DEBUGGING) {                                            \
-fprintf(stderr, "Error (%i):\n", error);                \
-fprintf(stderr, format, ##__VA_ARGS__);                            \
-}                                                        \
-return error;                                        \
+#define checkErrorMsg(error, format, ...) if(error) {   \
+fprintf(stderr, "Error (%i):\n", error);             	\
+fprintf(stderr, format, ##__VA_ARGS__);              	\
+return error;                                        	\
 }
+#else
+	#define checkError(error) if(error) return error
+	#define checkErrorMsg(error, format, ...) if(error) return error
+#endif
+
 
 #define BMD_NO_ERROR 0
 #define BMD_OKAY BMD_NO_ERROR

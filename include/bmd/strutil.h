@@ -191,7 +191,7 @@ int indicesOf(const char* str, char c, int** indices);
 #ifdef BMD_HEADERS_ONLY
 	#ifndef BMD_STRUTIL_IMPL
 		#define BMD_STRUTIL_IMPL
-#include "bmd/errors.h"
+#include "errors.h"
 
 #include <string.h>
 #include <stdlib.h>
@@ -199,16 +199,14 @@ int indicesOf(const char* str, char c, int** indices);
 int copyStr_s(char* dest, const char* src, int max)
 {
 	int size = 0;
-	int character;
+	char character;
 	const char* cpySrc = src;
 	do
 	{
 		if (size >= max)
 		{
-			if (BMD_DEBUGGING)
-				fprintf(stderr, "Error: String \"%s\" exceeds max length allowed (%i)\n",
+			dbgprinterr("Error: String \"%s\" exceeds max length allowed (%i)\n",
 						cpySrc, max);
-					BMD_ASSERT(0);
 			return BMD_ERROR_EXCEEDS_LENGTH;
 		}
 		character = *src++;
@@ -222,7 +220,7 @@ int copyStr_s(char* dest, const char* src, int max)
 int copyStr(char* dest, const char* src)
 {
 	int size = 0;
-	int character;
+	char character;
 	do
 	{
 		character = *src++;
@@ -236,7 +234,7 @@ int copyStr(char* dest, const char* src)
 int copyStrDynamic_s(char** dest, const char* src, int max)
 {
 	int bufferSize = sizeof(char) + strlen(src);
-	char* buffer = (char*) malloc(bufferSize);
+	char* buffer = VOID_TO_CHAR malloc(bufferSize);
 	if (!buffer) return BMD_ERROR_INVALID_MEMORY_ALLOCATION;
 	int size = copyStr_s(buffer, src, max);
 	*dest = buffer;
@@ -246,7 +244,7 @@ int copyStrDynamic_s(char** dest, const char* src, int max)
 int copyStrDynamic(char** dest, const char* src)
 {
 	int bufferSize = sizeof(char) + strlen(src);
-	char* buffer = (char*) malloc(bufferSize);
+	char* buffer = VOID_TO_CHAR malloc(bufferSize);
 	if (!buffer) return BMD_ERROR_INVALID_MEMORY_ALLOCATION;
 	int size = copyStr(buffer, src);
 	*dest = buffer;
@@ -307,7 +305,7 @@ int concatStrDynamic(char** orig, const char* add)
 	if (!orig) return BMD_ERROR_NULL_STRING;
 	if (!add) return BMD_ERROR_NULL_STRING;
 	int bufferSize = NULL_TERM_SIZE + strlen(*orig) + strlen(add);
-	char* buffer = malloc(bufferSize);
+	char* buffer = VOID_TO_CHAR malloc(bufferSize);
 	if (!buffer) return BMD_ERROR_INVALID_MEMORY_ALLOCATION;
 	int error = BMD_NO_ERROR;
 	if (strlen(*orig) > 0)
@@ -323,7 +321,7 @@ int concatStrDynamic_r(char** orig, const char* add, int start, int stop)
 	if (!orig) return BMD_ERROR_NULL_STRING;
 	if (!add) return BMD_ERROR_NULL_STRING;
 	int bufferSize = NULL_TERM_SIZE + strlen(*orig) + strlen(add);
-	char* buffer = malloc(bufferSize);
+	char* buffer = VOID_TO_CHAR malloc(bufferSize);
 	if (!buffer) return BMD_ERROR_INVALID_MEMORY_ALLOCATION;
 	int error = BMD_NO_ERROR;
 	if (strlen(*orig) > 0)
@@ -339,7 +337,7 @@ int concatStrDynamic_to(char** orig, const char* add, int stop)
 	if (!orig) return BMD_ERROR_NULL_STRING;
 	if (!add) return BMD_ERROR_NULL_STRING;
 	int bufferSize = NULL_TERM_SIZE + strlen(*orig) + strlen(add);
-	char* buffer = malloc(bufferSize);
+	char* buffer = VOID_TO_CHAR malloc(bufferSize);
 	if (!buffer) return BMD_ERROR_INVALID_MEMORY_ALLOCATION;
 	int error = BMD_NO_ERROR;
 	if (strlen(*orig) > 0)
@@ -353,22 +351,19 @@ char* substr(const char* str, int start, int stop)
 {
 	if (!str)
 	{
-		if (BMD_DEBUGGING)
-			fprintf(stderr, "Error: Tried to get substring from a null string\n");
+		dbgprinterr("Error: Tried to get substring from a null string\n");
 		return NULL;
 	}
 	int length = strlen(str);
 	if (start < 0 || stop > length || start >= length || stop <= 0)
 	{
-		if (BMD_DEBUGGING)
-			fprintf(stderr,
-					"Error: Index out of bounds when trying to get a substring\n"
+		dbgprinterr("Error: Index out of bounds when trying to get a substring\n"
 					"Ensure start >= 0 and stop < str length (%i). Given start: %i, stop: %i\n",
 					length, start, stop);
 		return NULL;
 	}
 
-	char* ptr = malloc(stop - start + sizeof(char)); // + char size to account for \0
+	char* ptr = VOID_TO_CHAR malloc(stop - start + sizeof(char)); // + char size to account for \0
 	int c;
 	for (c = 0; c < (stop - start); c++)
 	{
@@ -383,8 +378,7 @@ char* substrFrom(const char* str, int start)
 {
 	if (!str)
 	{
-		if (BMD_DEBUGGING)
-			fprintf(stderr, "Error: Attempted to capture a substring from a null string\n");
+		dbgprinterr("Error: Attempted to capture a substring from a null string\n");
 		return NULL;
 	}
 
@@ -412,7 +406,7 @@ int indicesOf(const char* str, char c, int** indices)
 {
 	if (!str) return BMD_ERROR_NULL_STRING;
 	int n = 0;
-	int* ret = (int*) malloc(strlen(str) * sizeof(int));
+	int* ret = VOID_TO_INT malloc(strlen(str) * sizeof(int));
 	if (!ret) return BMD_ERROR_INVALID_MEMORY_ALLOCATION;
 	for (int i = 0; i < strlen(str); i++)
 	{

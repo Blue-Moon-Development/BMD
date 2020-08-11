@@ -14,24 +14,27 @@
  * 
  * Contact: team@bluemoondev.org
  * 
- * File Name: timer.cpp
- * Date File Created: 8/7/2020 at 2:01 PM
+ * File Name: core.h
+ * Date File Created: 8/10/2020 at 11:07 PM
  * Author: Matt
  */
 
-#include "bmd/timer.h"
-#include <time.h>
+#ifndef BMD_CORE_H
+#define BMD_CORE_H
+
+
+#include "platform.h"
+#include "common.h"
+#include "types.h"
+#include "arrays.h"
+#include "errors.h"
+#include "logger.h"
+#include "files.h"
+#include "strutil.h"
+#include "timer.h"
 
 #ifdef __cplusplus
-void getCurrentTime(char (&timeStr)[100], const char* format)
-	#else
-void getCurrentTime(char timeStr[100], const char* format)
-	#endif
-{
-	time_t rawTime;
-	struct tm* timeInfo;
-	time(&rawTime);
-	timeInfo = localtime(&rawTime);
-	strftime(timeStr, 100, format, timeInfo);
-}
+	#include "profiler.h"
+#endif
 
+#endif //BMD_CORE_H

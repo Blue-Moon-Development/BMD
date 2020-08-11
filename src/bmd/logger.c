@@ -128,7 +128,7 @@ void logMessage(const char* level, const char* msg, const char* file, const char
 		char data[2048];
 		sprintf(data, "\n[%s] [%s] [%s:%d] [%s] %s", buf, level, file, line, func, msg);
 		writeToFile(&g_logFile, data, "at");
-		print("%s", data);
+		dbgprint("%s", data);
 	}
 }
 

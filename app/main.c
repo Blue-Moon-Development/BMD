@@ -239,6 +239,9 @@ int main(int argc, char** argv)
 	//getCurrentTime(buf);
 	//printf("Time is %s\n", buf);
 
+	char buf[100];
+	getCurrentTime(buf, DEFAULT_TIME_FORMAT);
+
 	initLog("./info.log", LOG_MODE_ARCHIVE, 7);
 	PROFILER_START("Log profile");
 	logInfo("This is just a test");

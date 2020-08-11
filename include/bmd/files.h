@@ -31,6 +31,7 @@
 
 #include "types.h"
 #include "platform.h"
+#include "common.h"
 
 
 #include <string.h> // deprecated in favor of cstring, but this will allow future portability to C
@@ -273,17 +274,10 @@ int compareTimes(fs_time* a, fs_time* b);
 };
 #endif // __cplusplus
 
-// TODO: Add implementations
-// TODO: Add functions to compare times
-// TODO: Add functions to check states (i.e if a file exists or not)
-// TODO: Add recursive functions to retrieve files in a directory and/or sub directory(ies)
-// TODO: Add function to write to the file
-// TODO: Add function to append to the file
+
 // TODO: Add function to clear the file
-// TODO: Add function to delete the file
 // TODO: On the loadFile and loadFileAndReadContents, maybe add callback so it can load the data as an image
 // Like, in Mage3D's case, callback(file_t* file, stuff) { file->contents = SOIL_load_image.... } ?
-// TODO: Make a callback wrapper so capture can be used? i.e [&](stuff) {} ? Might need static_cast and c++ however
 
 
 
@@ -381,9 +375,8 @@ struct FSTime
 #ifdef BMD_HEADERS_ONLY
 	#ifndef BMD_FILES_IMPL
 		#define BMD_FILES_IMPL
-#include "bmd/errors.h"
-#include "bmd/strutil.h"
-#include "bmd/logger.h"
+#include "errors.h"
+#include "strutil.h"
 
 
 const char* getExt(file_t* file)
@@ -420,7 +413,7 @@ int loadFile_(const char* dirPath, const char* fileName, file_t* file)
 	file_t temp;
 	while (dir.hasNext)
 	{
-		error = loadFile(&dir, &temp);
+		error = loadFileFromDir(&dir, &temp);
 		if (error) return error;
 		if (temp.isFile && strcmp(temp.name, fileName) == 0)
 		{
@@ -455,9 +448,9 @@ int loadFile(const char* filePath, file_t* file)
 	if (lastSlashIndex < 0)
 		return lastSlashIndex;
 	char* dirName = substr(filePath, 0, lastSlashIndex);
-	char* fileName = substr(filePath, lastSlashIndex + 1);
+	char* fileName = substrFrom(filePath, lastSlashIndex + 1);
 
-	return loadFile(dirName, fileName, file);
+	return loadFile_(dirName, fileName, file);
 }
 
 int readFile(const char* file, char** data)
@@ -468,7 +461,7 @@ int readFile(const char* file, char** data)
 	checkErrorMsg(error, "Could not open file %s\n", file);
 	fseek(f, 0, SEEK_END);
 	ulong len = ftell(f);
-	char* buffer = (char*) malloc(len + 1);
+	char* buffer = VOID_TO_CHAR malloc(len + 1);
 	if (!buffer)
 	{
 		checkErrorMsg(BMD_ERROR_INVALID_MEMORY_ALLOCATION,
@@ -492,7 +485,7 @@ int loadFileAndReadContents_(const char* dir, const char* fileName, file_t* file
 	file_t temp;
 	while (dirt.hasNext)
 	{
-		error = loadFileAndReadContents(&dirt, &temp);
+		error = loadFileFromDirAndReadContents(&dirt, &temp);
 		if (error) return error;
 		if (temp.isFile && strcmp(temp.name, fileName) == 0)
 		{
@@ -521,9 +514,9 @@ int loadFileAndReadContents(const char* filePath, file_t* file)
 	if (lastSlashIndex < 0)
 		return lastSlashIndex;
 	char* dirName = substr(filePath, 0, lastSlashIndex);
-	char* fileName = substr(filePath, lastSlashIndex + 1);
+	char* fileName = substrFrom(filePath, lastSlashIndex + 1);
 
-	return loadFileAndReadContents(dirName, fileName, file);
+	return loadFileAndReadContents_(dirName, fileName, file);
 }
 
 int readFileContents(file_t* file)
@@ -534,7 +527,7 @@ int readFileContents(file_t* file)
 	fopen_s(&f, file->path, "rt");
 	//fseek(f, 0, SEEK_END);
 	//ulong len = ftell(f);
-	char* data = (char*) malloc(file->size);
+	char* data = VOID_TO_CHAR malloc(file->size);
 	memset(data, 0, file->size);
 	fread(data, 1, file->size - 1, f);
 	fclose(f);
@@ -570,21 +563,21 @@ int traverse(const char* dirPath, fs_callback callback, void* userData)
 {
 	dir_t dir;
 	int error = openDir(&dir, dirPath);
-	checkError(error)
+	checkError(error);
 
 	while (dir.hasNext)
 	{
 		file_t file;
-		error = loadFile(&dir, &file);
-		checkError(error)
+		error = loadFileFromDir(&dir, &file);
+		checkError(error);
 
 		if (file.isFile)
 			callback(&file, userData);
 		error = nextFile(&dir);
-		checkError(error)
+		checkError(error);
 	}
 	error = closeDir(&dir);
-	checkError(error)
+	checkError(error);
 	return BMD_NO_ERROR;
 }
 
@@ -592,37 +585,37 @@ int traverse_r(const char* dirPath, fs_callback callback, void* userData)
 {
 	dir_t dir;
 	int error = openDir(&dir, dirPath);
-	checkError(error)
+	checkError(error);
 
 	while (dir.hasNext)
 	{
 		file_t file;
-		error = loadFile(&dir, &file);
-		checkError(error)
+		error = loadFileFromDir(&dir, &file);
+		checkError(error);
 		if (file.isDir && file.name[ 0 ] != '.')
 		{
 			char path[MAX_PATH_LENGTH];
 			int size = copyStr_s(path, dirPath, MAX_PATH_LENGTH);
 			if (size < 0)
 			{
-				logWarn("Failed to copy directory path string while traversing");
+				dbgprintln("Failed to copy directory path string while traversing");
 				return size; // will be BMD_ERROR_EXCEEDS_LENGTH
 			}
 			error = concatStr(path, "/");
-			checkError(error)
+			checkError(error);
 			error = concatStr(path, file.name);
-			checkError(error)
+			checkError(error);
 			error = traverse_r(path, callback, userData);
-			checkError(error)
+			checkError(error);
 		}
 
 		if (file.isFile)
 			callback(&file, userData);
 		error = nextFile(&dir);
-		checkError(error)
+		checkError(error);
 	}
 	error = closeDir(&dir);
-	checkError(error)
+	checkError(error);
 	return BMD_NO_ERROR;
 }
 
@@ -722,8 +715,8 @@ int openDir(dir_t* dir, const char* path)
 
 	if (dir->handle == INVALID_HANDLE_VALUE)
 	{
-		if (BMD_DEBUGGING)
-			fprintf(stderr, "Error: Could not open directory [%s] - %s", path, strerror(errno));
+		dbgprinterr("Error: Could not open directory [%s] - %s", path, strerror(errno));
+
 		// To be safe, lets mark the directory as closed
 		closeDir(dir);
 		//BMD_ASSERT(0);
@@ -776,7 +769,7 @@ int nextFile(dir_t* dir)
 int getCreationTime(const char* path, fs_time* time)
 {
 	if (!doesFileExist(path)) return BMD_ERROR_FILE_NOT_FOUND;
-	time->time = { 0 };
+	time->time;
 	WIN32_FILE_ATTRIBUTE_DATA info;
 	if (GetFileAttributesExA(path, GetFileExInfoStandard, &info))
 	{
@@ -788,14 +781,14 @@ int getCreationTime(const char* path, fs_time* time)
 		FileTimeToSystemTime(&(info.ftCreationTime), &utcTime);
 		SYSTEMTIME local;
 		SystemTimeToTzSpecificLocalTime(&tzi, &utcTime, &local);
-		WCHAR* zoneName = nullptr;
+		WCHAR* zoneName = 0;
 		if (zone == TIME_ZONE_ID_STANDARD)
 			zoneName = tzi.StandardName;
 		else if (zone == TIME_ZONE_ID_DAYLIGHT)
 			zoneName = tzi.DaylightName;
 		// Going for format -> MM/dd/yyyy at hh:mm:ss
 		// That's 22 characters, 23 if we include null terminating character
-		//char* formatted = (char*) malloc(23 * sizeof(char));
+		//char* formatted = VOID_TO_CHAR malloc(23 * sizeof(char));
 		sprintf(time->time_str, "%02d/%02d/%04d at %02d:%02d:%02d %ls", local.wMonth, local.wDay, local.wYear,
 				local.wHour, local.wMinute, local.wSecond, zoneName);
 		//time->time_str = formatted;
@@ -808,7 +801,7 @@ int getCreationTime(const char* path, fs_time* time)
 int getLastModifiedTime(const char* path, fs_time* time)
 {
 	if (!doesFileExist(path)) return BMD_ERROR_FILE_NOT_FOUND;
-	time->time = { 0 };
+	time->time;
 	WIN32_FILE_ATTRIBUTE_DATA info;
 	if (GetFileAttributesExA(path, GetFileExInfoStandard, &info))
 	{
@@ -822,7 +815,7 @@ int getLastModifiedTime(const char* path, fs_time* time)
 		SystemTimeToTzSpecificLocalTime(&tzi, &utcTime, &local);
 		// Going for format -> MM/dd/yyyy at hh:mm:ss
 		// That's 22 characters, 23 if we include null terminating character
-		//char* formatted = (char*) malloc(30 * sizeof(char));
+		//char* formatted = VOID_TO_CHAR malloc(30 * sizeof(char));
 		WCHAR* zoneName = (WCHAR*) "";
 		if (zone == TIME_ZONE_ID_STANDARD)
 			zoneName = tzi.StandardName;
