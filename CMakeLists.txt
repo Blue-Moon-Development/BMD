@@ -3,8 +3,8 @@ cmake_minimum_required(VERSION 3.16...3.18)
 project(BMD
 VERSION 0.1
 DESCRIPTION "Lightweight platform independent utilities with emphasis on C implementations where possible"
-LANGUAGES CXX)
-
+LANGUAGES C CXX)
+set(CMAKE_C_STANDARD 11)
 #set(CMAKE_VERBOSE_MAKEFILE ON)
 set(CMAKE_COLOR_MAKEFILE ON)
 set(BMD_LIB "bmd")
@@ -28,7 +28,7 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
 
   # We want std=c++xx not g++
 #  set(CMAKE_C_STANDARD 11)
-  set(CMAKE_CXX_EXTENSIONS OFF)
+#  set(CMAKE_CXX_EXTENSIONS OFF)
 
   # Lets us use folders in IDEs
   set_property(GLOBAL PROPERTY USE_FOLDERS ON)
@@ -46,10 +46,9 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
 endif()
 
 
-include(find_stackwalker)
-
 add_subdirectory(src)
 add_subdirectory(app)
+add_subdirectory(app_cpp)
 
 # Still learning about Check2 so for now tests are pointless
 #if((CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME OR MODERN_CMAKE_BUILD_TESTING) AND BUILD_TESTING)

@@ -23,7 +23,6 @@
 #include "bmd/common.h"
 #include "bmd/strutil.h"
 #include "bmd/timer.h"
-#include "bmd/errors.h"
 
 file_t g_logFile;
 int g_initialized;
@@ -33,18 +32,18 @@ int count = 0;
 void findOldestFile(file_t* file, void* data)
 {
 	fs_time time;
-	getLastModifiedTime(file, &time);
+	getLastModifiedTimeOfFile(file, &time);
 	if (count > 0)
 	{
 		int a = compareTimes(&time, &lastTime);
 		if (a < 0)
 		{
-			getLastModifiedTime(file, &lastTime);
+			getLastModifiedTimeOfFile(file, &lastTime);
 			copyStr((*(file_t*) data).path, file->path);
 		}
 	} else
 	{
-		getLastModifiedTime(file, &lastTime);
+		getLastModifiedTimeOfFile(file, &lastTime);
 		copyStr((*(file_t*) data).path, file->path);
 	}
 	count++;
@@ -56,7 +55,7 @@ void initLog(const char* logPath, int mode, int maxArchives)
 	if (!doesFileExist(logPath))
 	{
 		char buf[100];
-		getCurrentTime(buf);
+		getCurrentTime(buf, DEFAULT_TIME_FORMAT);
 		char initBuf[500];
 		//== == == ==
 		sprintf(initBuf,
@@ -97,7 +96,7 @@ void initLog(const char* logPath, int mode, int maxArchives)
 
 
 			char buf[100];
-			getCurrentTime(buf);
+			getCurrentTime(buf, DEFAULT_TIME_FORMAT);
 			char initBuf[500];
 			//== == == ==
 			sprintf(initBuf,
@@ -108,13 +107,13 @@ void initLog(const char* logPath, int mode, int maxArchives)
 		} else if (mode == LOG_MODE_APPEND)
 		{
 			char buf[100];
-			getCurrentTime(buf);
+			getCurrentTime(buf, DEFAULT_TIME_FORMAT);
 			char initBuf[500];
 			sprintf(initBuf,
 					"\n\n\n============================== Current log started on %s ==============================\n\n",
 					buf);
 			loadFile(logPath, &g_logFile);
-			writeFile(&g_logFile, initBuf, "at");
+			writeToFile(&g_logFile, initBuf, "at");
 		}
 	}
 	g_initialized = 1;
@@ -125,10 +124,10 @@ void logMessage(const char* level, const char* msg, const char* file, const char
 	if (g_initialized)
 	{
 		char buf[100];
-		getCurrentTime(buf);
-		char data[2048] = { };
+		getCurrentTime(buf, DEFAULT_TIME_FORMAT);
+		char data[2048];
 		sprintf(data, "\n[%s] [%s] [%s:%d] [%s] %s", buf, level, file, line, func, msg);
-		writeFile(&g_logFile, data, "at");
+		writeToFile(&g_logFile, data, "at");
 		print("%s", data);
 	}
 }
@@ -137,9 +136,9 @@ void logMessageNoLevel(const char* msg, const char* file, const char* func, int 
 {
 	if (g_initialized)
 	{
-		char data[2048] = { };
+		char data[2048];
 		sprintf(data, "\nStack Trace at [%s:%d] [%s]\n%s", file, line, func, msg);
-		writeFile(&g_logFile, data, "at");
+		writeToFile(&g_logFile, data, "at");
 	}
 }
 
@@ -166,10 +165,5 @@ void logWarnMessage(const char* msg, const char* file, const char* func, int lin
 void logErrorMessage(const char* msg, const char* file, const char* func, int line)
 {
 	logMessage(LEVEL_ERROR, msg, file, func, line);
-#if  defined(_MSC_VER) && defined(__cplusplus)
-	LogStackWalker lsw(file, func, line);
-	lsw.ShowCallstack();
-	lsw.logStacktrace();
-#endif
 }
 

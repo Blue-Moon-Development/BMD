@@ -20,54 +20,6 @@
  */
 
 #include "bmd/errors.h"
-#include "bmd/logger.h"
-
-#if defined(_MSC_VER) && defined(__cplusplus)
-void LogStackWalker::OnOutput(LPCSTR szText)
-{
-	if(BMD_VERBOSE)
-		printf(szText);
-	//logMessageNoLevel(szText, m_file, m_func, m_line);
-	StackWalker::OnOutput(szText);
-}
-
-void
-LogStackWalker::OnCallstackEntry(StackWalker::CallstackEntryType eType, StackWalker::CallstackEntry& entry)
-{
-	//logMessageNoLevel(entry.name, entry.lineFileName, entry.moduleName, entry.lineNumber);
-	info.push_back(entry);
-	StackWalker::OnCallstackEntry(eType, entry);
-}
-
-void LogStackWalker::logStacktrace()
-{
-	std::string data;
-	for(const auto& i : info)
-	{
-		data.append("In ");
-		data.append(i.name); //function
-		data.append(" at ");
-		data.append(i.lineFileName); // file name
-		data.append(":");
-		char ln[10];
-		long nln = 0;
-		//if(i.lineNumber != 0)
-			nln = (long)i.lineNumber - 1;
-		//if(i.lineNumber == 0)
-		sprintf(ln, "%ld", nln); // Line number
-		data.append(ln);
-		data.append(" of module ");
-		data.append(i.moduleName); //exe name
-		data.append(" (sym type ");
-		data.append(i.symTypeString); // PDB (when debug, i assume different when not debug)
-		data.append(")\n");
-	}
-	logMessageNoLevel(data.c_str(), m_file, m_func, m_line);
-}
-
-#endif
-
-
 
 const char* getErrorString(int error)
 {

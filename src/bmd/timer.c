@@ -14,29 +14,12 @@
  * 
  * Contact: team@bluemoondev.org
  * 
- * File Name: timer.h
- * Date File Created: 8/7/2020 at 2:00 PM
+ * File Name: timer.cpp
+ * Date File Created: 8/7/2020 at 2:01 PM
  * Author: Matt
  */
 
-#ifndef BMD_TIMER_H
-#define BMD_TIMER_H
-
-#define DEFAULT_TIME_FORMAT "%m-%d-%Y %H:%M:%S"
-
-#ifdef __cplusplus
-extern "C" {
-#endif // __cplusplus
-
-void getCurrentTime(char (timeStr)[100], const char* format);
-
-#ifdef __cplusplus
-};
-#endif // __cplusplus
-
-#ifdef BMD_HEADERS_ONLY
-	#ifndef BMD_TIMER_IMPL
-		#define BMD_TIMER_IMPL
+#include "bmd/timer.h"
 #include <time.h>
 
 void getCurrentTime(char (timeStr)[100], const char* format)
@@ -47,7 +30,4 @@ void getCurrentTime(char (timeStr)[100], const char* format)
 	timeInfo = localtime(&rawTime);
 	strftime(timeStr, 100, format, timeInfo);
 }
-	#endif // BMD_TIMER_IMPL
-#endif // BMD_HEADERS_ONLY
 
-#endif //BMD_TIMER_H

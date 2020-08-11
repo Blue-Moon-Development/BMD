@@ -14,7 +14,7 @@ file(GLOB_RECURSE SRC_LIST CONFIGURE_DEPENDS
 
 
 if(MSVC)
-	set(BMD_INCLUDES "../include" ${STACKWALKER_INCLUDE_DIRS})
+	set(BMD_INCLUDES "../include")
 else()
 	set(BMD_INCLUDES "../include")
 endif()
@@ -22,7 +22,7 @@ endif()
 message(Blue "Adding static library ${BMD_LIB}")
 
 add_library(${BMD_LIB} STATIC ${SRC_LIST} ${HEADER_LIST})
-#set_property(TARGET ${BMD_LIB} PROPERTY C_STANDARD 11)
+set_property(TARGET ${BMD_LIB} PROPERTY C_STANDARD 11)
 define_property(TARGET PROPERTY HEADERS BRIEF_DOCS "Header files for the target" FULL_DOCS "Header files for the target to be used in source grouping")
 set_property(TARGET ${BMD_LIB} PROPERTY HEADERS ${HEADER_LIST})
 
@@ -31,10 +31,7 @@ set_property(TARGET ${BMD_LIB} PROPERTY SRCS ${SRC_LIST})
 
 message(STATUS "Setting include directories for ${BMD_LIB}, dirs: ${BMD_INCLUDES}")
 target_include_directories(${BMD_LIB} PUBLIC ${BMD_INCLUDES})
-if(MSVC)
-	target_link_libraries(${BMD_LIB} PUBLIC ${STACKWALKER_LIBRARIES})
-endif()
-target_compile_features(${BMD_LIB} PUBLIC cxx_std_11)
+#target_compile_features(${BMD_LIB} PUBLIC cxx_std_11)
 
 message(Blue "Creating folders for project ${BMD_STATIC}")
 target_source_group(

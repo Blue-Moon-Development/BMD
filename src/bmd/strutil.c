@@ -21,39 +21,15 @@
 
 
 #include "bmd/strutil.h"
-#include "bmd/types.h"
 #include "bmd/errors.h"
-#include "bmd/common.h"
 
 #include <string.h>
 #include <stdlib.h>
 
-//#include <setjmp.h>
-//#include <signal.h>
-//
-//jmp_buf jump;
-//
-//void segv(int sig)
-//{
-//	longjmp(jump, 1);
-//}
-//
-//int memcheck(void* x)
-//{
-//	volatile char c;
-//	int illegal = 0;
-//	signal(SIGSEGV, segv);
-//	if(!setjmp(jump))
-//		c = *(char*) (x);
-//	else illegal = 1;
-//	signal(SIGSEGV, SIG_DFL);
-//	return illegal;
-//}
-
 int copyStr_s(char* dest, const char* src, int max)
 {
 	int size = 0;
-	int character;
+	char character;
 	const char* cpySrc = src;
 	do
 	{
@@ -81,7 +57,7 @@ int copyStr_s(char* dest, const char* src, int max)
 int copyStr(char* dest, const char* src)
 {
 	int size = 0;
-	int character;
+	char character;
 	do
 	{
 		character = *src++;
@@ -92,23 +68,23 @@ int copyStr(char* dest, const char* src)
 	return size;
 }
 
-int copyStrDynamic_s(char*& dest, const char* src, int max)
+int copyStrDynamic_s(char** dest, const char* src, int max)
 {
 	int bufferSize = sizeof(char) + strlen(src);
 	char* buffer = (char*) malloc(bufferSize);
 	if (!buffer) return BMD_ERROR_INVALID_MEMORY_ALLOCATION;
 	int size = copyStr_s(buffer, src, max);
-	dest = buffer;
+	*dest = buffer;
 	return size;
 }
 
-int copyStrDynamic(char*& dest, const char* src)
+int copyStrDynamic(char** dest, const char* src)
 {
 	int bufferSize = sizeof(char) + strlen(src);
 	char* buffer = (char*) malloc(bufferSize);
 	if (!buffer) return BMD_ERROR_INVALID_MEMORY_ALLOCATION;
 	int size = copyStr(buffer, src);
-	dest = buffer;
+	*dest = buffer;
 	return size;
 }
 
@@ -130,7 +106,7 @@ int concatStr(char* orig, const char* add)
 	return BMD_NO_ERROR;
 }
 
-int concatStr(char* orig, const char* add, int start, int stop)
+int concatStr_r(char* orig, const char* add, int start, int stop)
 {
 	if (!orig) return BMD_ERROR_NULL_STRING;
 	if (!add) return BMD_ERROR_NULL_STRING;
@@ -156,9 +132,9 @@ int concatStr(char* orig, const char* add, int start, int stop)
 	return BMD_NO_ERROR;
 }
 
-int concatStr(char* orig, const char* add, int stop)
+int concatStr_to(char* orig, const char* add, int stop)
 {
-	return concatStr(orig, add, -1, stop);
+	return concatStr_r(orig, add, -1, stop);
 }
 
 int concatStrDynamic(char** orig, const char* add)
@@ -177,7 +153,7 @@ int concatStrDynamic(char** orig, const char* add)
 }
 
 
-int concatStrDynamic(char** orig, const char* add, int start, int stop)
+int concatStrDynamic_r(char** orig, const char* add, int start, int stop)
 {
 	if (!orig) return BMD_ERROR_NULL_STRING;
 	if (!add) return BMD_ERROR_NULL_STRING;
@@ -187,13 +163,13 @@ int concatStrDynamic(char** orig, const char* add, int start, int stop)
 	int error = BMD_NO_ERROR;
 	if (strlen(*orig) > 0)
 		copyStr(buffer, *orig);
-	error = concatStr(buffer, add, start, stop);
+	error = concatStr_r(buffer, add, start, stop);
 	if (!error) *orig = buffer;
 	return error;
 }
 
 
-int concatStrDynamic(char** orig, const char* add, int stop)
+int concatStrDynamic_to(char** orig, const char* add, int stop)
 {
 	if (!orig) return BMD_ERROR_NULL_STRING;
 	if (!add) return BMD_ERROR_NULL_STRING;
@@ -203,7 +179,7 @@ int concatStrDynamic(char** orig, const char* add, int stop)
 	int error = BMD_NO_ERROR;
 	if (strlen(*orig) > 0)
 		copyStr(buffer, *orig);
-	error = concatStr(buffer, add, stop);
+	error = concatStr_to(buffer, add, stop);
 	if (!error) *orig = buffer;
 	return error;
 }
@@ -227,7 +203,7 @@ char* substr(const char* str, int start, int stop)
 		return NULL;
 	}
 
-	char* ptr = (char*) malloc(stop - start + sizeof(char)); // + char size to account for \0
+	char* ptr = malloc(stop - start + sizeof(char)); // + char size to account for \0
 	int c;
 	for (c = 0; c < (stop - start); c++)
 	{
@@ -238,7 +214,7 @@ char* substr(const char* str, int start, int stop)
 	return ptr;
 }
 
-char* substr(const char* str, int start)
+char* substrFrom(const char* str, int start)
 {
 	if (!str)
 	{

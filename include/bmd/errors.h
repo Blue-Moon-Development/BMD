@@ -60,35 +60,69 @@ return error;                                        \
 #define errNoToStr(error) #error
 #define errString(error) "(" errNoToStr(error) ") " #error
 
-extern const char* getErrorString(int error);
+// TODO: Might be best to replace errors with structs to contain the error name?
+// Could even overload the == operator so nothing much would need to be fixed in code
+#ifdef __cplusplus
+extern "C" {
+#endif // __cplusplus
 
+const char* getErrorString(int error);
 
+#ifdef __cplusplus
+};
+#endif // __cplusplus
 
-
-#if defined(_MSC_VER) && defined(__cplusplus)
-	#include <StackWalker.h>
-	#include <string>
-	#define STACKTRACE LogStackWalker(__FILE__, __FUNCTION__, __LINE__)
-	class LogStackWalker : public StackWalker
+#ifdef BMD_HEADERS_ONLY
+	#ifndef BMD_ERRORS_IMPL
+		#define BMD_ERRORS_IMPL
+const char* getErrorString(int error)
+{
+	switch (error)
 	{
-	public:
-		LogStackWalker(const char* file, const char* func, int line) :
-		m_file(file),
-		m_func(func),
-		m_line(line),
-		StackWalker() {}
+		case BMD_NO_ERROR:
+			return errString(BMD_NO_ERROR);
+		case BMD_ERROR_NOT_YET_IMPLEMENTED:
+			return errString(BMD_ERROR_NOT_YET_IMPLEMENTED);
+		case BMD_ERROR_NOT_SUPPORTED_BY_PLATFORM:
+			return errString(BMD_ERROR_NOT_SUPPORTED_BY_PLATFORM);
+		case BMD_ERROR_CHAR_NOT_IN_STRING:
+			return errString(BMD_ERROR_CHAR_NOT_IN_STRING);
+		case BMD_ERROR_OPEN_DIR:
+			return errString(BMD_ERROR_OPEN_DIR);
+		case BMD_ERROR_CLOSE_DIR:
+			return errString(BMD_ERROR_CLOSE_DIR);
+		case BMD_ERROR_NEXT_FILE:
+			return errString(BMD_ERROR_NEXT_FILE);
+		case BMD_ERROR_READ_FILE:
+			return errString(BMD_ERROR_READ_FILE);
+		case BMD_ERROR_NULL_FILE:
+			return errString(BMD_ERROR_NULL_FILE);
+		case BMD_ERROR_FILE_NOT_FOUND:
+			return errString(BMD_ERROR_FILE_NOT_FOUND);
+		case BMD_ERROR_FILE_TIME:
+			return errString(BMD_ERROR_FILE_TIME);
+		case BMD_ERROR_CHAR_NOT_FOUND:
+			return errString(BMD_ERROR_CHAR_NOT_FOUND);
+		case BMD_ERROR_NULL_STRING:
+			return errString(BMD_ERROR_NULL_STRING);
+		case BMD_ERROR_EXCEEDS_LENGTH:
+			return errString(BMD_ERROR_EXCEEDS_LENGTH);
+		case BMD_ERROR_INVALID_MEMORY_ALLOCATION:
+			return errString(BMD_ERROR_INVALID_MEMORY_ALLOCATION);
+		case BMD_ERROR_NOT_A_FILE:
+			return errString(BMD_ERROR_NOT_A_FILE);
+		case BMD_ERROR_TRAVERSE:
+			return errString(BMD_ERROR_TRAVERSE);
+		case BMD_ERROR_PATH_NOT_FOUND:
+			return errString(BMD_ERROR_PATH_NOT_FOUND);
+		case BMD_ERROR_CREATE_DIR:
+			return errString(BMD_ERROR_CREATE_DIR);
 
-		void logStacktrace();
-	protected:
-		void OnOutput(LPCSTR szText) override;
-		void OnCallstackEntry(CallstackEntryType eType, CallstackEntry &entry) override;
-		const char* m_file;
-		const char* m_func;
-		int m_line;
-		list<CallstackEntry> info;
-	};
-
-
+		default:
+			return "Invalid Error";
+	}
+}
+	#endif
 #endif
 
 #endif //BMD_ERRORS_H

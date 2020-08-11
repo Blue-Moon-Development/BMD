@@ -21,7 +21,6 @@
 
 #include "bmd/files.h"
 #include "bmd/errors.h"
-#include "bmd/common.h"
 #include "bmd/strutil.h"
 #include "bmd/logger.h"
 
@@ -51,7 +50,7 @@ int doesFileHaveExt(file_t* file, const char* ext)
 }
 
 
-int loadFile(const char* dirPath, const char* fileName, file_t* file)
+int loadFile_(const char* dirPath, const char* fileName, file_t* file)
 {
 	int error = BMD_NO_ERROR;
 	dir_t dir;
@@ -60,7 +59,7 @@ int loadFile(const char* dirPath, const char* fileName, file_t* file)
 	file_t temp;
 	while (dir.hasNext)
 	{
-		error = loadFile(&dir, &temp);
+		error = loadFileFromDir(&dir, &temp);
 		if (error) return error;
 		if (temp.isFile && strcmp(temp.name, fileName) == 0)
 		{
@@ -95,14 +94,14 @@ int loadFile(const char* filePath, file_t* file)
 	if (lastSlashIndex < 0)
 		return lastSlashIndex;
 	char* dirName = substr(filePath, 0, lastSlashIndex);
-	char* fileName = substr(filePath, lastSlashIndex + 1);
+	char* fileName = substrFrom(filePath, lastSlashIndex + 1);
 
-	return loadFile(dirName, fileName, file);
+	return loadFile_(dirName, fileName, file);
 }
 
 int readFile(const char* file, char** data)
 {
-	if (!doesFileExist(file)) return NULL;
+	if (!doesFileExist(file)) return BMD_ERROR_FILE_NOT_FOUND;
 	FILE* f;
 	int error = fopen_s(&f, file, "rt");
 	checkErrorMsg(error, "Could not open file %s\n", file);
@@ -123,7 +122,7 @@ int readFile(const char* file, char** data)
 	return BMD_NO_ERROR;
 }
 
-int loadFileAndReadContents(const char* dir, const char* fileName, file_t* file)
+int loadFileAndReadContents_(const char* dir, const char* fileName, file_t* file)
 {
 	int error = BMD_NO_ERROR;
 	dir_t dirt;
@@ -132,7 +131,7 @@ int loadFileAndReadContents(const char* dir, const char* fileName, file_t* file)
 	file_t temp;
 	while (dirt.hasNext)
 	{
-		error = loadFileAndReadContents(&dirt, &temp);
+		error = loadFileFromDirAndReadContents(&dirt, &temp);
 		if (error) return error;
 		if (temp.isFile && strcmp(temp.name, fileName) == 0)
 		{
@@ -161,9 +160,9 @@ int loadFileAndReadContents(const char* filePath, file_t* file)
 	if (lastSlashIndex < 0)
 		return lastSlashIndex;
 	char* dirName = substr(filePath, 0, lastSlashIndex);
-	char* fileName = substr(filePath, lastSlashIndex + 1);
+	char* fileName = substrFrom(filePath, lastSlashIndex + 1);
 
-	return loadFileAndReadContents(dirName, fileName, file);
+	return loadFileAndReadContents_(dirName, fileName, file);
 }
 
 int readFileContents(file_t* file)
@@ -192,7 +191,7 @@ int writeFile(const char* file, const char* data, const char* mode)
 	return BMD_NO_ERROR;
 }
 
-int writeFile(file_t* file, const char* data, const char* mode)
+int writeToFile(file_t* file, const char* data, const char* mode)
 {
 	if (!file) return BMD_ERROR_NULL_FILE;
 	if (!file->isFile) return BMD_ERROR_NOT_A_FILE;
@@ -215,7 +214,7 @@ int traverse(const char* dirPath, fs_callback callback, void* userData)
 	while (dir.hasNext)
 	{
 		file_t file;
-		error = loadFile(&dir, &file);
+		error = loadFileFromDir(&dir, &file);
 		checkError(error)
 
 		if (file.isFile)
@@ -237,7 +236,7 @@ int traverse_r(const char* dirPath, fs_callback callback, void* userData)
 	while (dir.hasNext)
 	{
 		file_t file;
-		error = loadFile(&dir, &file);
+		error = loadFileFromDir(&dir, &file);
 		checkError(error)
 		if (file.isDir && file.name[ 0 ] != '.')
 		{
@@ -266,13 +265,13 @@ int traverse_r(const char* dirPath, fs_callback callback, void* userData)
 	return BMD_NO_ERROR;
 }
 
-int getCreationTime(file_t* file, fs_time* time)
+int getCreationTimeOfFile(file_t* file, fs_time* time)
 {
 	if (!file) return BMD_ERROR_NULL_FILE;
 	return getCreationTime(file->path, time);
 }
 
-int getLastModifiedTime(file_t* file, fs_time* time)
+int getLastModifiedTimeOfFile(file_t* file, fs_time* time)
 {
 	if (!file) return BMD_ERROR_NULL_FILE;
 	return getLastModifiedTime(file->path, time);
@@ -286,7 +285,7 @@ int doesFileExist(const char* path)
 	return GetFileAttributesExA(path, GetFileExInfoStandard, &temp);
 }
 
-int loadFile(dir_t* dir, file_t* file)
+int loadFileFromDir(dir_t* dir, file_t* file)
 {
 			BMD_ASSERT(dir->handle != INVALID_HANDLE_VALUE);
 	int n = 0;
@@ -316,7 +315,7 @@ int loadFile(dir_t* dir, file_t* file)
 	return BMD_NO_ERROR;
 }
 
-int loadFileAndReadContents(dir_t* dir, file_t* file)
+int loadFileFromDirAndReadContents(dir_t* dir, file_t* file)
 {
 			BMD_ASSERT(dir->handle != INVALID_HANDLE_VALUE);
 	int n = 0;
@@ -392,7 +391,7 @@ int createDir(const char* path)
 	DWORD err = GetLastError();
 	if (err == ERROR_PATH_NOT_FOUND)
 		return BMD_ERROR_PATH_NOT_FOUND;
-	else if (err != ERROR_ALREADY_EXISTS && !success)
+	else if (err != ERROR_ALREADY_EXISTS)
 		return BMD_ERROR_CREATE_DIR;
 	return BMD_NO_ERROR;
 }
@@ -416,7 +415,7 @@ int nextFile(dir_t* dir)
 int getCreationTime(const char* path, fs_time* time)
 {
 	if (!doesFileExist(path)) return BMD_ERROR_FILE_NOT_FOUND;
-	time->time = { 0 };
+	time->time;
 	WIN32_FILE_ATTRIBUTE_DATA info;
 	if (GetFileAttributesExA(path, GetFileExInfoStandard, &info))
 	{
@@ -428,7 +427,7 @@ int getCreationTime(const char* path, fs_time* time)
 		FileTimeToSystemTime(&(info.ftCreationTime), &utcTime);
 		SYSTEMTIME local;
 		SystemTimeToTzSpecificLocalTime(&tzi, &utcTime, &local);
-		WCHAR* zoneName = nullptr;
+		WCHAR* zoneName = 0;
 		if (zone == TIME_ZONE_ID_STANDARD)
 			zoneName = tzi.StandardName;
 		else if (zone == TIME_ZONE_ID_DAYLIGHT)
@@ -448,7 +447,7 @@ int getCreationTime(const char* path, fs_time* time)
 int getLastModifiedTime(const char* path, fs_time* time)
 {
 	if (!doesFileExist(path)) return BMD_ERROR_FILE_NOT_FOUND;
-	time->time = { 0 };
+	time->time;
 	WIN32_FILE_ATTRIBUTE_DATA info;
 	if (GetFileAttributesExA(path, GetFileExInfoStandard, &info))
 	{
@@ -490,7 +489,7 @@ int doesFileExist(const char* path)
 	return 0;
 }
 
-int loadFile(dir_t* dir, file_t* file)
+int loadFileFromDir(dir_t* dir, file_t* file)
 {
 	return BMD_ERROR_NOT_YET_IMPLEMENTED;
 }

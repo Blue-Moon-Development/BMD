@@ -50,6 +50,7 @@
 static const int BMD_DEBUGGING = DEBUGGING;
 static const int BMD_VERBOSE = VERBOSE;
 
+//TODO: print and println are rather common, should call them bmd_print or something
 #if DEBUGGING
 	#define println(fmt_, ...) printf(fmt_"\n", ##__VA_ARGS__)
 	#define print(fmt_, ...) printf(fmt_, ##__VA_ARGS__)

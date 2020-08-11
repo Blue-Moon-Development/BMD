@@ -22,8 +22,6 @@
 #include <bmd/errors.h>
 #include <bmd/types.h>
 #include <stdio.h>
-#include <limits>
-#include <iostream>
 #include <bmd/arrays.h>
 #include <bmd/files.h>
 
@@ -31,7 +29,7 @@ void test_substr()
 {
 	// From start to end
 	//TODO: Maybe scrap the idea of logging the file/line number, we have debugger for a reason
-	char* sub = substr("This is an example string", 7);
+	char* sub = substrFrom("This is an example string", 7);
 	printf("Sub str is: %s\n", sub);
 	sub = substr("How about this sample text", 4, 11);
 	printf("Sub str is: %s\n", sub);
@@ -58,11 +56,11 @@ void test_index_finder()
 void test_arr_length()
 {
 	float a[] = { 1, 2, 3 };
-	int len = getLength(a);
+	int len = getLength_f(a);
 	printf("Length is: %i\n", len);
 
 	double b[] = { 5, 2, 45, 5, 2 };
-	len = getLength(b);
+	len = getLength_d(b);
 	printf("Length is: %i\n", len);
 }
 
@@ -75,11 +73,11 @@ void test_concat()
 	printf("hello became: %s\n", hello);
 
 	char world[20] = { "world" };
-	concatStr(world, " and hello! to you too!", 7);
+	concatStr_to(world, " and hello! to you too!", 7);
 	printf("world became: %s\n", world);
 
 	char hi[20] = { "Really?" };
-	concatStr(hi, " Yes really you monkey brain", 7, 10);
+	concatStr_r(hi, " Yes really you monkey brain", 7, 10);
 	printf("hi became: %s\n", hi);
 
 	char* maybe = "hopefully";
@@ -90,13 +88,13 @@ void test_concat()
 		free(maybe);
 
 	char* one = "one";
-	int e2 = concatStrDynamic(&one, " two three four!", 4, 9);
+	int e2 = concatStrDynamic_r(&one, " two three four!", 4, 9);
 	printf("one: %s\n", one);
 	if (!e2 && one)
 		free(one);
 
 	char* abc = "abc";
-	int e3 = concatStrDynamic(&abc, " easy as 1 2 3!", 5);
+	int e3 = concatStrDynamic_to(&abc, " easy as 1 2 3!", 5);
 	printf("abc: %s\n", abc);
 	if (!e3 && abc)
 		free(abc);
@@ -110,17 +108,17 @@ void test_copy()
 	printf("staticStr became: %s\n", staticStr);
 
 	char* dynStr;
-	copyStrDynamic_s(dynStr, "Set it to this text", 100);
+	copyStrDynamic_s(&dynStr, "Set it to this text", 100);
 	printf("dynStr became: %s\n", dynStr);
 
-	char stStr[100] = { };
+	char stStr[100];
 	copyStr(stStr, "Wow im cool!");
 	printf("stStr became: %s\n", stStr);
 
-	char* rewriteThis = (char*) "im gonna be replaced!"; // no cast works fine, but the warning was annoying me
+	char* rewriteThis = "im gonna be replaced!";
 	// (c++ 11 conversion from string literal to char* was removed, only still compiles for C compatibility)
 	// Maybe I can disable that warning?
-	copyStrDynamic(rewriteThis, "new dynamic text");
+	copyStrDynamic(&rewriteThis, "new dynamic text");
 	printf("rewriteThis became: %s\n", rewriteThis);
 
 	// Dynamic copies must be freed or else we get memory leaks!
@@ -188,7 +186,7 @@ void test_files()
 		printf("File contents:\n%s\n", load_read.contents);
 
 	fs_time loadreadTime;
-	error = getCreationTime(&load_read, &loadreadTime);
+	error = getCreationTimeOfFile(&load_read, &loadreadTime);
 	if (!error)
 		printf("File created: %s\n", loadreadTime.time_str);
 
@@ -207,7 +205,7 @@ void test_files()
 	char* fileContentsW;
 	readFile("./test.log", &fileContentsW);
 	printf("File contents of variable: %s\nAnd when reading file: %s\n", writeToHere.contents, fileContentsW);
-	error = writeFile(&writeToHere, "\nThis is some more testing", "at");
+	error = writeToFile(&writeToHere, "\nThis is some more testing", "at");
 	if (!error)
 	{
 		printf("File contents of variable: %s\nAnd when reading file: %s\n", writeToHere.contents,
@@ -231,7 +229,6 @@ void test_files()
 #include <bmd/logger.h>
 #define BMD_PROFILE 0
 #include <bmd/profiler.h>
-#include <iomanip>
 
 int main(int argc, char** argv)
 {
@@ -259,28 +256,6 @@ int main(int argc, char** argv)
 	logInfo("This is just a test 10");
 	logInfo("This is just a test 11");
 	logError(getErrorString(-16));
-	char buf[100] = "Something";
-	PROFILER_START("strcat test");
-	strcat(buf, "add this to it");
-	PROFILER_END;
-	char otherBuf[100] = "somehting else";
-	PROFILER_START("concatStr test");
-	concatStr(otherBuf, "add this to it and stuff");
-	PROFILER_END;
-
-	PROFILER_START("cout timer");
-
-	std::cout << "This is " << 23 << " some sample text " << std::setprecision(3) << 0.2344554f <<  " with endl" << std::endl;
-	PROFILER_END;
-
-	PROFILER_START("cout timer no endl");
-	std::cout << "This is " << 23 << " some sample text " << std::setprecision(3) << 0.2344554f <<  " with no endl\n";
-	PROFILER_END;
-
-	PROFILER_START("printf timer");
-
-	printf("This is %i some sample text %.3f with printf\n", 23, 0.2344554f);
-	PROFILER_END;
 
 	//test_substr();
 	//test_index_finder();
@@ -297,4 +272,3 @@ int main(int argc, char** argv)
 
 
 }
-

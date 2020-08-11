@@ -22,6 +22,8 @@
 #ifndef BMD_PROFILER_H
 #define BMD_PROFILER_H
 
+#ifdef __cplusplus
+
 #include <algorithm>
 #include <chrono>
 #include <string>
@@ -37,7 +39,7 @@ class Profiler
 public:
 	static void start(const char* name)
 	{
-		if(!instance().isStopped())
+		if (!instance().isStopped())
 			stop();
 		instance().setName(name);
 		instance().setStart(std::chrono::steady_clock::now());
@@ -50,7 +52,8 @@ public:
 		auto highResStart = fltmicro { instance().getStart().time_since_epoch() };
 		auto elapsedTime =
 				std::chrono::time_point_cast<std::chrono::microseconds>(endTime).time_since_epoch() -
-				std::chrono::time_point_cast<std::chrono::microseconds>(instance().getStart()).time_since_epoch();
+				std::chrono::time_point_cast<std::chrono::microseconds>(instance().getStart())
+						.time_since_epoch();
 		fprintf(stderr, "Profiler Result [%s] Duration: %lld ms (Start time %.3f)\n",
 				instance().getName(), elapsedTime.count(), highResStart.count());
 		instance().setStopped(true);
@@ -59,48 +62,55 @@ public:
 private:
 
 	Profiler() = default;
+
 	static Profiler& instance()
 	{
 		static Profiler prof;
 		return prof;
 	}
 
-	void setName(const char* name){
+	void setName(const char* name)
+	{
 		m_name = name;
 	}
 
-	void setStart(std::chrono::time_point<std::chrono::steady_clock> start){
+	void setStart(std::chrono::time_point<std::chrono::steady_clock> start)
+	{
 		m_start = start;
 	}
 
-	void setStopped(bool stopped){
+	void setStopped(bool stopped)
+	{
 		m_stopped = stopped;
 	}
 
-	const char* getName(){
+	const char* getName()
+	{
 		return m_name;
 	}
 
-	std::chrono::time_point<std::chrono::steady_clock> getStart(){
+	std::chrono::time_point<std::chrono::steady_clock> getStart()
+	{
 		return m_start;
 	}
 
-	bool isStopped(){
+	bool isStopped() const
+	{
 		return m_stopped;
 	}
 
-	const char* m_name{};
+	const char* m_name { };
 	std::chrono::time_point<std::chrono::steady_clock> m_start;
 	bool m_stopped = true;
 };
 
-
+#endif // __cplusplus
 
 #ifndef BMD_PROFILE
 	#define BMD_PROFILE 0
 #endif
 
-#if BMD_PROFILE
+#if BMD_PROFILE && defined(__cplusplus)
 	#define PROFILER_START(name) Profiler::start(name)
 	#define PROFILER_END Profiler::stop()
 #else

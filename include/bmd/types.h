@@ -39,7 +39,7 @@
 #define BMD_TYPES_H
 
 #include <stdint.h>
-#include <vector>
+
 // A lot of stuff is currently only functional for C++ so might as well add some of my common
 // C++ typedefs and whatnot until I have time to make everything compatible for C
 
@@ -103,8 +103,11 @@ typedef long double flt96;
 
 // Because I use "Lists" in Java more than I use vectors in C++,
 // this is just simply a small rewrite of the vector for quality of life sake
+#ifdef __cplusplus
+#include <vector>
  template<class T>
  using list = std::vector<T>;
+#endif // __cplusplus
 // ignoring this for now unless it happens that functions I really want in this library just aren't possible in C
 
 #endif //BMD_TYPES_H

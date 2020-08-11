@@ -13,8 +13,8 @@ file(GLOB_RECURSE APP_HEADER_LIST CONFIGURE_DEPENDS
 	)
 
 add_executable(app ${APP_SRC_LIST} ${APP_HEADER_LIST})
-target_compile_features(app PRIVATE cxx_std_11)
-#set_property(TARGET app PROPERTY C_STANDARD 11)
+#target_compile_features(app PRIVATE cxx_std_11)
+set_property(TARGET app PROPERTY C_STANDARD 11)
 
 message(Magenta "Linking BMD library to the test app")
 target_link_libraries(app PRIVATE ${BMD_LIB})

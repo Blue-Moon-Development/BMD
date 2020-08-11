@@ -24,6 +24,9 @@
 
 #if defined(WIN32) || defined(WIN64) || defined(_WIN32) || defined(_WIN64) || defined(_WINDOWS) || defined(__WIN32__) || defined(__WINDOWS__) || defined(__TOS_WIN__)
 #define OS_NAME "Windows"
+	#if defined(WIN64) || defined(_WIN64)
+		#define OS_WINDOWS_64
+	#endif
 #define OS_WINDOWS
 
 #elif defined(macintosh) || defined(Macintosh) || defined(__APPLE__) || defined(__MACH__)

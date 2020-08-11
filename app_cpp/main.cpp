@@ -14,20 +14,28 @@
  * 
  * Contact: team@bluemoondev.org
  * 
- * File Name: timer.cpp
- * Date File Created: 8/7/2020 at 2:01 PM
+ * File Name: main.cpp
+ * Date File Created: 8/10/2020 at 7:16 PM
  * Author: Matt
  */
 
-#include "bmd/timer.h"
-#include <time.h>
+#include <bmd/logger.h>
+#define BMD_PROFILE 1
+#include <bmd/profiler.h>
 
-void getCurrentTime(char (&timeStr)[100], const char* format)
+int main(int argc, char** argv)
 {
-	time_t rawTime;
-	struct tm* timeInfo;
-	time(&rawTime);
-	timeInfo = localtime(&rawTime);
-	strftime(timeStr, 100, format, timeInfo);
+	initLog("./info.log", LOG_MODE_APPEND, 5);
+	PROFILER_START("All log tests");
+	//PROFILER_START("Log profiling");
+	logInfo("This is a test log for C++");
+	//PROFILER_END;
+	logTrace("This is a test log for C++");
+	logDebug("This is a test log for C++");
+	logWarn("This is a test log for C++");
+	logError("This is a test log for C++");
+	logError("This is a test log for C++");
+	PROFILER_END;
+	return 0;
 }
 
