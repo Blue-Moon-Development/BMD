@@ -32,9 +32,6 @@
 #include "files.h"
 #include "strutil.h"
 #include "timer.h"
-
-#ifdef __cplusplus
-	#include "profiler.h"
-#endif
+#include "profiler.h"
 
 #endif //BMD_CORE_H

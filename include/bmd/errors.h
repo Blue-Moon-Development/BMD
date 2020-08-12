@@ -59,6 +59,7 @@ return error;                                        	\
 #define BMD_ERROR_TRAVERSE -16
 #define BMD_ERROR_PATH_NOT_FOUND -17
 #define BMD_ERROR_CREATE_DIR -18
+#define BMD_ERROR_EMPTY_FILE -19
 
 
 #define errNoToStr(error) #error

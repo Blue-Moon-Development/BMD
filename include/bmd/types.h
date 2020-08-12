@@ -60,8 +60,6 @@ typedef uint16_t uint16_f; // unsigned short
 typedef uint32_t uint32_f; // unsigned int
 typedef uint64_t uint64_f; // unsigned long long
 
-// A byte is traditionally 0-255, but there is no byte type in C/C++. Closest thing is char which goes to 127
-//typedef char byte;
 typedef unsigned char ubyte;
 typedef signed char sbyte;
 
@@ -70,7 +68,7 @@ typedef unsigned short ushort;
 typedef unsigned int uint;
 typedef unsigned long ulong;
 typedef unsigned long long ulonglong;
-// TODO: Need to check, but 'long long' might be C++ only and not C?
+
 
 // If my understanding is correct, these aren't necessarily fixed like uint#_t
 typedef unsigned char uint8;

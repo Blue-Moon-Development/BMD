@@ -161,6 +161,20 @@ int loadFileAndReadContents_(const char* dir, const char* fileName, file_t* file
 int loadFileAndReadContents(const char* filePath, file_t* file);
 
 /**
+* Unloads a file from BMD's file system. Frees up any allocated memory and closes the FILE stream if need be
+* @param file The file to unload
+* @return 0 if no error, non 0 if error
+*/
+int unloadFile(file_t* file);
+
+/**
+* Flushes the file stream contained in the FSFile struct
+* @param file The file to flush
+* @return 0 if no error, non 0 if error
+*/
+int flushFile(file_t* file);
+
+/**
 * Takes an already filled out fs_file struct and reads the contents of the file
 * @param file The file to read the contents of and fill the file::contents
 * @return zero if there was no error, non-zero if there was an error
@@ -310,6 +324,12 @@ struct FSFile
 
 	/** The contents of the file. Null until the file is read */
 	char* contents;
+
+	/** Flushing and closing the file stream can be costly, this is simply to keep track of a file stream so that
+	* opening, closing, flushing, etc are only done when actually needed or desired*/
+	FILE* outStream;
+
+	FILE* inStream;
 };
 
 /**
@@ -352,6 +372,10 @@ struct FSFile
 	int isFile;
 	int size;
 	char* contents;
+	/** Flushing and closing the file stream can be costly, this is simply to keep track of a file stream so that
+	* opening, closing, flushing, etc are only done when actually needed or desired*/
+	FILE* outStream;
+	FILE* inStream;
 	struct stat info;
 };
 
@@ -375,6 +399,7 @@ struct FSTime
 #ifdef BMD_HEADERS_ONLY
 	#ifndef BMD_FILES_IMPL
 		#define BMD_FILES_IMPL
+
 #include "errors.h"
 #include "strutil.h"
 
@@ -406,6 +431,9 @@ int doesFileHaveExt(file_t* file, const char* ext)
 
 int loadFile_(const char* dirPath, const char* fileName, file_t* file)
 {
+	file->inStream = NULL;
+	file->outStream = NULL;
+	file->contents = 0;
 	int error = BMD_NO_ERROR;
 	dir_t dir;
 	error = openDir(&dir, dirPath);
@@ -423,6 +451,8 @@ int loadFile_(const char* dirPath, const char* fileName, file_t* file)
 			file->isDir = temp.isDir;
 			file->isFile = temp.isFile;
 			file->size = temp.size;
+			dbgprintln("Loading file [path=%s, name=%s, dir=%i, file=%i, size=%i]", file->path, file->name,
+					   file->isDir, file->isFile, file->size);
 			closeDir(&dir);
 			return error;
 		}
@@ -436,12 +466,7 @@ int loadFile_(const char* dirPath, const char* fileName, file_t* file)
 
 int loadFile(const char* filePath, file_t* file)
 {
-	if(!doesFileExist(filePath))
-	{
-		FILE* f;
-		fopen_s(&f, filePath, "at");
-		fclose(f);
-	}
+	if (!doesFileExist(filePath)) return BMD_ERROR_FILE_NOT_FOUND;
 	int lastSlashIndex = lastIndexOf(filePath, '/');
 	if (lastSlashIndex < 0)
 		lastSlashIndex = lastIndexOf(filePath, '\\');
@@ -455,12 +480,13 @@ int loadFile(const char* filePath, file_t* file)
 
 int readFile(const char* file, char** data)
 {
-	if (!doesFileExist(file)) return NULL;
+	if (!doesFileExist(file)) return BMD_ERROR_FILE_NOT_FOUND;
 	FILE* f;
 	int error = fopen_s(&f, file, "rt");
 	checkErrorMsg(error, "Could not open file %s\n", file);
 	fseek(f, 0, SEEK_END);
 	ulong len = ftell(f);
+	if(len == 0) return BMD_ERROR_EMPTY_FILE;
 	char* buffer = VOID_TO_CHAR malloc(len + 1);
 	if (!buffer)
 	{
@@ -478,6 +504,9 @@ int readFile(const char* file, char** data)
 
 int loadFileAndReadContents_(const char* dir, const char* fileName, file_t* file)
 {
+	file->inStream = NULL;
+	file->outStream = NULL;
+	file->contents = 0;
 	int error = BMD_NO_ERROR;
 	dir_t dirt;
 	error = openDir(&dirt, dir);
@@ -508,6 +537,7 @@ int loadFileAndReadContents_(const char* dir, const char* fileName, file_t* file
 
 int loadFileAndReadContents(const char* filePath, file_t* file)
 {
+	if(!doesFileExist(filePath)) return BMD_ERROR_FILE_NOT_FOUND;
 	int lastSlashIndex = lastIndexOf(filePath, '/');
 	if (lastSlashIndex < 0)
 		lastSlashIndex = lastIndexOf(filePath, '\\');
@@ -519,18 +549,57 @@ int loadFileAndReadContents(const char* filePath, file_t* file)
 	return loadFileAndReadContents_(dirName, fileName, file);
 }
 
+int unloadFile(file_t* file)
+{
+	if (!file) return BMD_ERROR_NULL_FILE;
+	if (file->contents)
+	{
+		free(file->contents);
+		file->contents = NULL;
+	}
+	if (file->outStream)
+	{
+		int err = fclose(file->outStream);
+		checkErrorMsg(err, "Error: Failed to close file out stream\n");
+		file->outStream = NULL;
+	}
+
+	if (file->inStream)
+	{
+		int err = fclose(file->inStream);
+		checkErrorMsg(err, "Error: Failed to close file in stream\n");
+		file->inStream = NULL;
+	}
+	return BMD_NO_ERROR;
+}
+
+
+int flushFile(file_t* file)
+{
+	if (!file) return BMD_ERROR_NULL_FILE;
+	if (file->outStream)
+	{
+		int err = fflush(file->outStream);
+		checkErrorMsg(err, "Error: Failed to flush file out stream\n");
+	}
+	return BMD_NO_ERROR;
+}
+
 int readFileContents(file_t* file)
 {
 	if (!file) return BMD_ERROR_NULL_FILE;
 	if (!doesFileExist(file->path)) return BMD_ERROR_FILE_NOT_FOUND;
-	FILE* f;
-	fopen_s(&f, file->path, "rt");
+	if (file->size <= 0) return BMD_ERROR_NULL_FILE;
+	if (!file->inStream)
+	{
+		fopen_s(&file->inStream, file->path, "rt");
+	}
 	//fseek(f, 0, SEEK_END);
 	//ulong len = ftell(f);
 	char* data = VOID_TO_CHAR malloc(file->size);
 	memset(data, 0, file->size);
-	fread(data, 1, file->size - 1, f);
-	fclose(f);
+	fread(data, 1, file->size - 1, file->inStream);
+	//fclose(f);
 	file->contents = data;
 	if (!file->contents) return BMD_ERROR_READ_FILE;
 	return BMD_NO_ERROR;
@@ -549,12 +618,12 @@ int writeToFile(file_t* file, const char* data, const char* mode)
 {
 	if (!file) return BMD_ERROR_NULL_FILE;
 	if (!file->isFile) return BMD_ERROR_NOT_A_FILE;
-	FILE* f;
-	fopen_s(&f, file->path, mode);
-	fwrite(data, 1, strlen(data), f);
-	fseek(f, 0, SEEK_END);
-	ulong len = ftell(f);
-	fclose(f);
+	if (!file->outStream)
+		fopen_s(&file->outStream, file->path, mode);
+	fwrite(data, 1, strlen(data), file->outStream);
+	fseek(file->outStream, 0, SEEK_END);
+	ulong len = ftell(file->outStream);
+	//fclose(f); // TODO This alone costs roughly 1000 to 2000 ms
 	file->size = len + 1;
 	return BMD_NO_ERROR;
 }
@@ -642,25 +711,30 @@ int doesFileExist(const char* path)
 int loadFileFromDir(dir_t* dir, file_t* file)
 {
 			BMD_ASSERT(dir->handle != INVALID_HANDLE_VALUE);
+	file->inStream = NULL;
+	file->outStream = NULL;
+	file->contents = 0;
 	int n = 0;
 	int error = BMD_NO_ERROR;
 	char* dirPath = dir->path;
 	char* filePath = file->path;
 	n = copyStr_s(filePath, dirPath, MAX_PATH_LENGTH);
-	if (n < 0) return n;
+	checkErrorMsg(n < 0, "Failed to set file path");
 	error = concatStr(filePath, "/");
-	if (error) return error;
+	checkErrorMsg(error, "Failed to add / to file path");
 
 	char* dirName = dir->fdata.cFileName;
 	char* fileName = file->name;
 
 	n = copyStr_s(fileName, dirName, MAX_FILENAME_LENGTH);
-	if (n < 0) return n;
+	checkErrorMsg(n < 0, "Failed to set file name");
 
 	error = concatStr(filePath, fileName);
-	if (error) return error;
+	checkErrorMsg(error, "Failed to concatenate filepath and filename");
 
 	file->size = ((size_t) dir->fdata.nFileSizeHigh * (MAXDWORD + 1)) + (size_t) dir->fdata.nFileSizeLow;
+	dbgprintln("File size: %llu (for file %s)",
+			   ((size_t) dir->fdata.nFileSizeHigh * (MAXDWORD + 1)) + (size_t) dir->fdata.nFileSizeLow, fileName);
 	getExt(file);
 	file->isDir = (dir->fdata.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
 	file->isFile = (dir->fdata.dwFileAttributes & FILE_ATTRIBUTE_NORMAL) != 0 ||
@@ -672,6 +746,9 @@ int loadFileFromDir(dir_t* dir, file_t* file)
 int loadFileFromDirAndReadContents(dir_t* dir, file_t* file)
 {
 			BMD_ASSERT(dir->handle != INVALID_HANDLE_VALUE);
+	file->inStream = NULL;
+	file->outStream = NULL;
+	file->contents = 0;
 	int n = 0;
 	int error = BMD_NO_ERROR;
 	char* dirPath = dir->path;
@@ -745,7 +822,7 @@ int createDir(const char* path)
 	DWORD err = GetLastError();
 	if (err == ERROR_PATH_NOT_FOUND)
 		return BMD_ERROR_PATH_NOT_FOUND;
-	else if (err != ERROR_ALREADY_EXISTS && !success)
+	else if (err != ERROR_ALREADY_EXISTS)
 		return BMD_ERROR_CREATE_DIR;
 	return BMD_NO_ERROR;
 }
@@ -816,7 +893,7 @@ int getLastModifiedTime(const char* path, fs_time* time)
 		// Going for format -> MM/dd/yyyy at hh:mm:ss
 		// That's 22 characters, 23 if we include null terminating character
 		//char* formatted = VOID_TO_CHAR malloc(30 * sizeof(char));
-		WCHAR* zoneName = (WCHAR*) "";
+		WCHAR* zoneName = 0;
 		if (zone == TIME_ZONE_ID_STANDARD)
 			zoneName = tzi.StandardName;
 		else if (zone == TIME_ZONE_ID_DAYLIGHT)

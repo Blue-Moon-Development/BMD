@@ -22,6 +22,9 @@
 #ifndef BMD_COMMON_H
 #define BMD_COMMON_H
 
+#include <stdio.h>
+#include <assert.h>
+#include <errno.h>
 
 #ifndef BMD_DEBUGGING
 	#define BMD_DEBUGGING 0
@@ -34,11 +37,6 @@
 
 
 #if BMD_DEBUGGING || BMD_VERBOSE
-
-#include <stdio.h>
-#include <assert.h>
-#include <errno.h>
-
 #define BMD_ASSERT assert
 #else
 // If BMD_DEBUGGING is disabled (not 1) then don't use assert

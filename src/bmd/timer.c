@@ -24,14 +24,143 @@
 
 #ifdef __cplusplus
 void getCurrentTime(char (&timeStr)[100], const char* format)
-	#else
+#else
 void getCurrentTime(char timeStr[100], const char* format)
-	#endif
+#endif
 {
 	time_t rawTime;
 	struct tm* timeInfo;
 	time(&rawTime);
-	timeInfo = localtime(&rawTime);
+	localtime_s(timeInfo, &rawTime);
 	strftime(timeStr, 100, format, timeInfo);
 }
 
+#ifdef OS_WINDOWS
+	#include <Windows.h>
+
+void sleepTimer(int ms)
+{
+	Sleep(ms);
+}
+
+float elapsedTime()
+{
+	static int first = 1;
+	static LARGE_INTEGER prev;
+	static double factor;
+	LARGE_INTEGER now;
+	QueryPerformanceCounter(&now);
+
+	if (first)
+	{
+		first = 0;
+		prev = now;
+		LARGE_INTEGER freq;
+		QueryPerformanceFrequency(&freq);
+		factor = 1.0 / (double) freq.QuadPart;
+		return 0;
+	}
+
+	float elapsed = (float) ((double) (now.QuadPart - prev.QuadPart) * factor);
+	prev = now;
+	return elapsed;
+}
+
+void initTimer(timer_t* timer)
+{
+	int64_f freq;
+	if (QueryPerformanceFrequency((LARGE_INTEGER * ) & freq))
+	{
+		timer->freq = freq;
+		timer->secondsPerCount = 1.0f / (float) freq;
+	}
+
+	resetTimer(timer);
+}
+
+float totalTime(timer_t* timer)
+{
+	if (timer->stopped)
+		return (float) (timer->pausedTime - timer->startTime - timer->totalIdleTime) * timer->secondsPerCount;
+	else
+		return (float) (timer->currentTime - timer->startTime - timer->totalIdleTime) *
+			   timer->secondsPerCount;
+}
+
+void resetTimer(timer_t* timer)
+{
+	int64_f nowi;
+	if (QueryPerformanceCounter((LARGE_INTEGER * ) & nowi))
+	{
+		timer->startTime = nowi;
+		timer->currentTime = nowi;
+		timer->previousTime = nowi;
+		timer->pausedTime = 0;
+		timer->stopped = 0;
+		timer->totalIdleTime = 0;
+		timer->delta = 0;
+	}
+}
+
+void unpauseTimer(timer_t* timer)
+{
+	if (timer->stopped)
+	{
+		int64_f nowi;
+		if (QueryPerformanceCounter((LARGE_INTEGER*) nowi))
+		{
+			timer->totalIdleTime += (nowi - timer->pausedTime);
+			timer->previousTime = nowi;
+			timer->pausedTime = 0;
+			timer->stopped = 0;
+		}
+	}
+}
+
+void pauseTimer(timer_t* timer)
+{
+	if (!timer->stopped)
+	{
+		int64_f nowi;
+		if (QueryPerformanceCounter((LARGE_INTEGER*) nowi))
+		{
+			timer->pausedTime = nowi;
+			timer->stopped = 1;
+		}
+	}
+}
+
+void tickTimer(timer_t* timer)
+{
+	if (timer->stopped)
+		timer->delta = 0;
+	else
+	{
+		if (QueryPerformanceCounter((LARGE_INTEGER * ) & timer->currentTime))
+		{
+			timer->delta = (float) (timer->currentTime - timer->previousTime) * timer->secondsPerCount;
+			timer->elapsedTime = timer->currentTime - timer->previousTime;
+			timer->previousTime = timer->currentTime;
+			if (timer->delta < 0)
+				timer->delta = 0;
+		}
+	}
+}
+
+
+int64_f seconds(timer_t* timer, int64_f ticks)
+{
+	return ticks / timer->freq;
+}
+
+int64_f milliseconds(timer_t* timer, int64_f ticks)
+{
+	return ticks / (timer->freq / 1000);
+}
+
+int64_f microseconds(timer_t* timer, int64_f ticks)
+{
+	return ticks / (timer->freq / 1000000);
+}
+
+#endif

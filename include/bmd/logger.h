@@ -59,6 +59,9 @@ void logInfoMessage(const char* msg, const char* file, const char* func, int lin
 void logWarnMessage(const char* msg, const char* file, const char* func, int line);
 void logErrorMessage(const char* msg, const char* file, const char* func, int line);
 
+void flushLog();
+void closeLog();
+
 
 #define logTrace(msg) logTraceMessage(msg, __FILE__, __FUNCTION__, __LINE__)
 #define logDebug(msg) logDebugMessage(msg, __FILE__, __FUNCTION__, __LINE__)
@@ -182,7 +185,7 @@ void logMessage(const char* level, const char* msg, const char* file, const char
 	{
 		char buf[100];
 		getCurrentTime(buf, DEFAULT_TIME_FORMAT);
-		char data[2048] = { };
+		char data[2048];
 		sprintf(data, "\n[%s] [%s] [%s:%d] [%s] %s", buf, level, file, line, func, msg);
 		writeToFile(&g_logFile, data, "at");
 #if BMD_DEBUGGING
@@ -228,6 +231,15 @@ void logWarnMessage(const char* msg, const char* file, const char* func, int lin
 void logErrorMessage(const char* msg, const char* file, const char* func, int line)
 {
 	logMessage(LEVEL_ERROR, msg, file, func, line);
+}
+
+void flushLog()
+{
+	flushFile(&g_logFile);
+}
+void closeLog()
+{
+	unloadFile(&g_logFile);
 }
 
 	#endif

@@ -52,6 +52,9 @@ int doesFileHaveExt(file_t* file, const char* ext)
 
 int loadFile_(const char* dirPath, const char* fileName, file_t* file)
 {
+	file->inStream = NULL;
+	file->outStream = NULL;
+	file->contents = 0;
 	int error = BMD_NO_ERROR;
 	dir_t dir;
 	error = openDir(&dir, dirPath);
@@ -82,12 +85,7 @@ int loadFile_(const char* dirPath, const char* fileName, file_t* file)
 
 int loadFile(const char* filePath, file_t* file)
 {
-	if(!doesFileExist(filePath))
-	{
-		FILE* f;
-		fopen_s(&f, filePath, "at");
-		fclose(f);
-	}
+	if(!doesFileExist(filePath)) return BMD_ERROR_FILE_NOT_FOUND;
 	int lastSlashIndex = lastIndexOf(filePath, '/');
 	if (lastSlashIndex < 0)
 		lastSlashIndex = lastIndexOf(filePath, '\\');
@@ -107,6 +105,7 @@ int readFile(const char* file, char** data)
 	checkErrorMsg(error, "Could not open file %s\n", file);
 	fseek(f, 0, SEEK_END);
 	ulong len = ftell(f);
+	if(len == 0) return BMD_ERROR_EMPTY_FILE;
 	char* buffer = VOID_TO_CHAR malloc(len + 1);
 	if (!buffer)
 	{
@@ -124,6 +123,9 @@ int readFile(const char* file, char** data)
 
 int loadFileAndReadContents_(const char* dir, const char* fileName, file_t* file)
 {
+	file->inStream = NULL;
+	file->outStream = NULL;
+	file->contents = 0;
 	int error = BMD_NO_ERROR;
 	dir_t dirt;
 	error = openDir(&dirt, dir);
@@ -154,6 +156,7 @@ int loadFileAndReadContents_(const char* dir, const char* fileName, file_t* file
 
 int loadFileAndReadContents(const char* filePath, file_t* file)
 {
+	if(!doesFileExist(filePath)) return BMD_ERROR_FILE_NOT_FOUND;
 	int lastSlashIndex = lastIndexOf(filePath, '/');
 	if (lastSlashIndex < 0)
 		lastSlashIndex = lastIndexOf(filePath, '\\');
@@ -165,18 +168,55 @@ int loadFileAndReadContents(const char* filePath, file_t* file)
 	return loadFileAndReadContents_(dirName, fileName, file);
 }
 
+int unloadFile(file_t* file)
+{
+	if(!file) return BMD_ERROR_NULL_FILE;
+	if(file->contents)
+	{
+		free(file->contents);
+		file->contents = NULL;
+	}
+	if(file->inStream)
+	{
+		int err = fclose(file->inStream);
+		checkErrorMsg(err, "Error: Failed to close file in stream\n");
+		file->inStream = NULL;
+	}
+
+	if(file->outStream)
+	{
+		int err = fclose(file->outStream);
+		checkErrorMsg(err, "Error: Failed to close file out stream\n");
+		file->outStream = NULL;
+	}
+
+	return BMD_NO_ERROR;
+}
+
+
+int flushFile(file_t* file)
+{
+	if(!file) return BMD_ERROR_NULL_FILE;
+	if(file->outStream)
+	{
+		int err = fflush(file->outStream);
+		checkErrorMsg(err, "Error: Failed to flush file out stream\n");
+	}
+	return BMD_NO_ERROR;
+}
+
 int readFileContents(file_t* file)
 {
 	if (!file) return BMD_ERROR_NULL_FILE;
 	if (!doesFileExist(file->path)) return BMD_ERROR_FILE_NOT_FOUND;
-	FILE* f;
-	fopen_s(&f, file->path, "rt");
+	if(file->size <= 1) return BMD_ERROR_EMPTY_FILE;
+	if(!file->inStream)
+		fopen_s(&file->inStream, file->path, "rt");
 	//fseek(f, 0, SEEK_END);
 	//ulong len = ftell(f);
 	char* data = VOID_TO_CHAR malloc(file->size);
 	memset(data, 0, file->size);
-	fread(data, 1, file->size - 1, f);
-	fclose(f);
+	fread(data, 1, file->size - 1, file->inStream);
 	file->contents = data;
 	if (!file->contents) return BMD_ERROR_READ_FILE;
 	return BMD_NO_ERROR;
@@ -195,12 +235,11 @@ int writeToFile(file_t* file, const char* data, const char* mode)
 {
 	if (!file) return BMD_ERROR_NULL_FILE;
 	if (!file->isFile) return BMD_ERROR_NOT_A_FILE;
-	FILE* f;
-	fopen_s(&f, file->path, mode);
-	fwrite(data, 1, strlen(data), f);
-	fseek(f, 0, SEEK_END);
-	ulong len = ftell(f);
-	fclose(f);
+	if(!file->outStream)
+		fopen_s(&file->outStream, file->path, mode);
+	fwrite(data, 1, strlen(data), file->outStream);
+	fseek(file->outStream, 0, SEEK_END);
+	ulong len = ftell(file->outStream);
 	file->size = len + 1;
 	return BMD_NO_ERROR;
 }
@@ -288,6 +327,9 @@ int doesFileExist(const char* path)
 int loadFileFromDir(dir_t* dir, file_t* file)
 {
 			BMD_ASSERT(dir->handle != INVALID_HANDLE_VALUE);
+	file->inStream = NULL;
+	file->outStream = NULL;
+	file->contents = 0;
 	int n = 0;
 	int error = BMD_NO_ERROR;
 	char* dirPath = dir->path;
@@ -318,6 +360,9 @@ int loadFileFromDir(dir_t* dir, file_t* file)
 int loadFileFromDirAndReadContents(dir_t* dir, file_t* file)
 {
 			BMD_ASSERT(dir->handle != INVALID_HANDLE_VALUE);
+	file->inStream = NULL;
+	file->outStream = NULL;
+	file->contents = 0;
 	int n = 0;
 	int error = BMD_NO_ERROR;
 	char* dirPath = dir->path;
