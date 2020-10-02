@@ -163,4 +163,17 @@ int64_f microseconds(timer_t* timer, int64_f ticks)
 	return ticks / (timer->freq / 1000000);
 }
 
+double seconds_f(timer_t* timer, int64_f ticks)
+{
+	return (double) ticks / (double)timer->freq;
+}
+double milliseconds_f(timer_t* timer, int64_f ticks)
+{
+	return (double) ticks / ((double) timer->freq / 1000.0);
+}
+double microseconds_f(timer_t* timer, int64_f ticks)
+{
+	return (double) ticks / ((double) timer->freq / 1000000.0);
+}
+
 #endif

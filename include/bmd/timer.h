@@ -55,6 +55,10 @@ int64_f seconds(timer_t* timer, int64_f ticks);
 int64_f milliseconds(timer_t* timer, int64_f ticks);
 int64_f microseconds(timer_t* timer, int64_f ticks);
 
+double seconds_f(timer_t* timer, int64_f ticks);
+double milliseconds_f(timer_t* timer, int64_f ticks);
+double microseconds_f(timer_t* timer, int64_f ticks);
+
 
 void sleepTimer(int ms);
 
@@ -170,7 +174,7 @@ void unpauseTimer(timer_t* timer)
 {
 	if(timer->stopped)
 	{
-		int64_f nowi;
+		int64_f nowi = 0;
 		if(QueryPerformanceCounter((LARGE_INTEGER*)nowi))
 		{
 			timer->totalIdleTime += (nowi - timer->pausedTime);
@@ -187,7 +191,7 @@ void pauseTimer(timer_t* timer)
 {
 	if(!timer->stopped)
 	{
-		int64_f nowi;
+		int64_f nowi = 0;
 		if(QueryPerformanceCounter((LARGE_INTEGER*)nowi))
 		{
 			timer->pausedTime = nowi;
@@ -227,6 +231,19 @@ int64_f milliseconds(timer_t* timer, int64_f ticks)
 int64_f microseconds(timer_t* timer, int64_f ticks)
 {
 	return ticks / (timer->freq / 1000000);
+}
+
+double seconds_f(timer_t* timer, int64_f ticks)
+{
+	return (double) ticks / (double)timer->freq;
+}
+double milliseconds_f(timer_t* timer, int64_f ticks)
+{
+	return (double) ticks / ((double) timer->freq / 1000.0);
+}
+double microseconds_f(timer_t* timer, int64_f ticks)
+{
+	return (double) ticks / ((double) timer->freq / 1000000.0);
 }
 
 

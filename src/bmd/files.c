@@ -20,6 +20,7 @@
  */
 
 #include <stdio.h>
+#include <Windows.h>
 #include "bmd/files.h"
 #include "bmd/errors.h"
 #include "bmd/strutil.h"

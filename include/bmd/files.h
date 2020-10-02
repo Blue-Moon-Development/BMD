@@ -297,7 +297,7 @@ int compareTimes(fs_time* a, fs_time* b);
 
 #ifdef OS_WINDOWS
 
-#include <Windows.h>
+//#include <Windows.h>
 
 /**
 * Represents a file in the BMD file system api
@@ -331,6 +331,7 @@ struct FSFile
 
 	FILE* inStream;
 };
+
 
 /**
 * Represents a directory in the bmd file system api
@@ -403,6 +404,8 @@ struct FSTime
 #include "errors.h"
 #include "strutil.h"
 
+#include <Windows.h>
+
 
 const char* getExt(file_t* file)
 {
@@ -451,7 +454,7 @@ int loadFile_(const char* dirPath, const char* fileName, file_t* file)
 			file->isDir = temp.isDir;
 			file->isFile = temp.isFile;
 			file->size = temp.size;
-			dbgprintln("Loading file [path=%s, name=%s, dir=%i, file=%i, size=%i]", file->path, file->name,
+			dbgprintln("Loading file [path=%s, name=%s, dir=%i, file=%i, size=%zu]", file->path, file->name,
 					   file->isDir, file->isFile, file->size);
 			closeDir(&dir);
 			return error;

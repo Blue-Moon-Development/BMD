@@ -38,47 +38,22 @@ void start_profiler_internal(const char* name)
 void stop_profiler_internal()
 {
 	tickTimer(&g_timer);
-	int64_f s = seconds(&g_timer, g_timer.elapsedTime);
-	int64_f ms = milliseconds(&g_timer, g_timer.elapsedTime);
-	int64_f us = microseconds(&g_timer, g_timer.elapsedTime);
+	double us = microseconds_f(&g_timer, g_timer.elapsedTime);
+	double count = us;
 	char abrev[3] = { (char) 230, 's', 0 };
-	if (us >= 1000)
+	if (us >= 10000)
 	{
-		us %= 1000;
-		if (ms >= 1000)
+		copyStr(abrev, "ms");
+		count = us / 1000.0;
+		if (count >= 5000)
 		{
-			ms %= 1000;
+			copyStr(abrev, "s");
+			count = count / 1000.0;
 		}
 	}
 
-	if (s >= 1)
-	{
-		if (ms >= 1 && us < 1)
-			fprintf(stderr, "Profiler [%s] Duration: %lli s %lli ms -- Start time: %lli -- End time: %lli\n",
-					g_name, s, ms, g_timer.startTime, g_timer.currentTime);
-		else if (ms >= 1 && us >= 1)
-			fprintf(stderr,
-					"Profiler [%s] Duration: %lli s %lli ms %lli %s -- Start time: %lli -- End time: %lli\n",
-					g_name, s, ms, us, abrev, g_timer.startTime, g_timer.currentTime);
-		else if (ms < 1 && us < 1)
-			fprintf(stderr, "Profiler [%s] Duration: %lli s -- Start time: %lli -- End time: %lli\n",
-					g_name, s, g_timer.startTime, g_timer.currentTime);
-		else if (ms < 1 && us >= 1)
-			fprintf(stderr, "Profiler [%s] Duration: %lli s %lli %s -- Start time: %lli -- End time: %lli\n",
-					g_name, s, us, abrev, g_timer.startTime, g_timer.currentTime);
-	} else if (ms >= 1)
-	{
-		if (us >= 1)
-			fprintf(stderr, "Profiler [%s] Duration: %lli ms %lli %s -- Start time: %lli -- End time: %lli\n",
-					g_name, ms, us, abrev, g_timer.startTime, g_timer.currentTime);
-		else
-			fprintf(stderr, "Profiler [%s] Duration: %lli ms -- Start time: %lli -- End time: %lli\n",
-					g_name, ms, g_timer.startTime, g_timer.currentTime);
-	} else if (us >= 1)
-	{
-		fprintf(stderr, "Profiler [%s] Duration: %lli %s -- Start time: %lli -- End time: %lli\n",
-				g_name, us, abrev, g_timer.startTime, g_timer.currentTime);
-	}
+	fprintf(stderr, "Profiler [%s] Duration: %f %s -- Start time: %lli -- End time: %lli\n",
+			g_name, count, abrev, g_timer.startTime, g_timer.currentTime);
 
 
 }
